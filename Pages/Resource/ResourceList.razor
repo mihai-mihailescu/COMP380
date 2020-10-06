@@ -1,0 +1,46 @@
+﻿@page "/resources"
+
+@using ProjectManagementSystem.Data.Resources
+@inject ResourceService ResourceService
+
+<h1>Resource List Page</h1>
+
+@if (resources == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Resource Name</th>
+                <th>Resource Title</th>
+                <th>Assigned Task</th>
+                <th></th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var resource in resources)
+            {
+            <tr>
+                <td>@resource.Name</td>
+                <td>@resource.Title</td>
+                <td>@resource.AssignedTask</td>
+                <td><button>Edit</button></td>
+                <td><button>Delete</button></td>
+            </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<Resource> resources;
+
+    protected override async Task OnInitializedAsync()
+    {
+        resources = await ResourceService.GetResourcesAsync();
+    }
+}
