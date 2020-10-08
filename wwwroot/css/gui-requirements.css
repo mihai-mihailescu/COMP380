@@ -1,0 +1,31 @@
+﻿h1{
+    text-align:center;
+    padding:1em;
+}
+
+.edit-button{
+    background-color:cornflowerblue;
+}
+
+.delete-button{
+    background-color:indianred;
+}
+
+.create-button{
+    background-color: lightsteelblue;    
+}
+
+.create-div{
+    padding-top:1em;
+}
+
+.back-button{
+    background-color:steelblue;
+}
+
+.list-table {
+    width: auto;
+    padding: 20px;
+    border: 3px solid black;
+    margin: auto;
+}
