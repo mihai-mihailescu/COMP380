@@ -13,11 +13,35 @@
     {
         resources = await ResourceService.GetResourcesAsync();
         resourceList = true;
-        createResource = false;
         resourceDetails = false;
+        createResource = false;
     }
 
+    private void ClickEdit(Guid Id)
+    {
+        resourceList = false;
+        resourceDetails = true;
+        createResource = false;
+    }
 
+    private void ClickCreate()
+    {
+        resourceList = false;
+        resourceDetails = false;
+        createResource = true;
+    }
+
+    private void ClickDelete(Guid Id)
+    {
+        resources.RemoveAll(x => x.Id == Id);
+    }
+
+    private void ClickBack()
+    {
+        resourceList = true;
+        resourceDetails = false;
+        createResource = false;
+    }
 }
 
 @if (resources == null)
@@ -43,22 +67,24 @@ else if (resourceList)
                 <tr>
                     <td>@resource.Name</td>
                     <td>@resource.Title</td>
-                    <td>@resource.AssignedTask</td>
-                    <td><button>Edit</button></td>
-                    <td><button>Delete</button></td>
+                    <td>@resource.AssignedTaskId</td>
+                    <td><button @onclick="@(e => ClickEdit(resource.Id))">Edit</button></td>
+                    <td><button @onclick="@(e => ClickDelete(resource.Id))">Delete</button></td>
                 </tr>
             }
         </tbody>
     </table>
+    <div>
+        <button @onclick="ClickCreate">Create</button>
+    </div>
 }
 else if (createResource)
 {
     <h1>Create Resource</h1>
+    <button @onclick="ClickBack">Back</button>
 }
 else if (resourceDetails)
 {
     <h1>Resource Details</h1>
+    <button @onclick="ClickBack">Back</button>
 }
-
-
-
