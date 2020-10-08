@@ -3,14 +3,30 @@
 @using ProjectManagementSystem.Data.Resources
 @inject ResourceService ResourceService
 
-<h1>Resource List Page</h1>
+@code {
+    private List<Resource> resources;
+    bool resourceList;
+    bool createResource;
+    bool resourceDetails;
+
+    protected override async Task OnInitializedAsync()
+    {
+        resources = await ResourceService.GetResourcesAsync();
+        resourceList = true;
+        createResource = false;
+        resourceDetails = false;
+    }
+
+
+}
 
 @if (resources == null)
 {
     <p><em>Loading...</em></p>
 }
-else
+else if (resourceList)
 {
+    <h1>Resource List Page</h1>
     <table class="table">
         <thead>
             <tr>
@@ -24,23 +40,25 @@ else
         <tbody>
             @foreach (var resource in resources)
             {
-            <tr>
-                <td>@resource.Name</td>
-                <td>@resource.Title</td>
-                <td>@resource.AssignedTask</td>
-                <td><button>Edit</button></td>
-                <td><button>Delete</button></td>
-            </tr>
+                <tr>
+                    <td>@resource.Name</td>
+                    <td>@resource.Title</td>
+                    <td>@resource.AssignedTask</td>
+                    <td><button>Edit</button></td>
+                    <td><button>Delete</button></td>
+                </tr>
             }
         </tbody>
     </table>
 }
-
-@code {
-    private List<Resource> resources;
-
-    protected override async Task OnInitializedAsync()
-    {
-        resources = await ResourceService.GetResourcesAsync();
-    }
+else if (createResource)
+{
+    <h1>Create Resource</h1>
 }
+else if (resourceDetails)
+{
+    <h1>Resource Details</h1>
+}
+
+
+

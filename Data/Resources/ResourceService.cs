@@ -9,11 +9,11 @@ namespace ProjectManagementSystem.Data.Resources
     {
         private static readonly Resource[] SeedResources = new[]
         {
-            new Resource() {Name = "Mihai", Title = "Architect", AssignedTask="Task1"},
-            new Resource() {Name = "Richard", Title = "Developer", AssignedTask="Task2"},
-            new Resource() {Name = "Michelle", Title = "QA Engineer", AssignedTask="Task3"},
-            new Resource() {Name = "Andranik", Title = "Business Analyst", AssignedTask="Task4"},
-            new Resource() {Name = "Brandon", Title = "Designer", AssignedTask="Task5"}
+            new Resource() {Id = Guid.NewGuid(), Name = "Mihai", Title = "Architect", AssignedTask="Task1"},
+            new Resource() {Id = Guid.NewGuid(), Name = "Richard", Title = "Developer", AssignedTask="Task2"},
+            new Resource() {Id = Guid.NewGuid(), Name = "Michelle", Title = "QA Engineer", AssignedTask="Task3"},
+            new Resource() {Id = Guid.NewGuid(), Name = "Andranik", Title = "Business Analyst", AssignedTask="Task4"},
+            new Resource() {Id = Guid.NewGuid(), Name = "Brandon", Title = "Designer", AssignedTask="Task5"}
         };
 
         public Task<List<Resource>> GetResourcesAsync()
