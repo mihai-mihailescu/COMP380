@@ -1,14 +1,10 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using Blazorise;
+using Blazorise.Bootstrap;
+using Blazorise.Icons.FontAwesome;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Identity.UI;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -16,6 +12,7 @@ using Microsoft.Extensions.Hosting;
 using ProjectManagementSystem.Areas.Identity;
 using ProjectManagementSystem.Data;
 using ProjectManagementSystem.Data.Resources;
+using ProjectManagementSystem.Data.Tasks;
 
 namespace ProjectManagementSystem
 {
@@ -37,10 +34,20 @@ namespace ProjectManagementSystem
                     Configuration.GetConnectionString("DefaultConnection")));
             services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
                 .AddEntityFrameworkStores<ApplicationDbContext>();
+            
             services.AddRazorPages();
             services.AddServerSideBlazor();
+
+            services.AddBlazorise(options =>
+            {
+                options.ChangeTextOnKeyPress = true; // optional
+            })
+                .AddBootstrapProviders()
+                .AddFontAwesomeIcons();
+
             services.AddScoped<AuthenticationStateProvider, RevalidatingIdentityAuthenticationStateProvider<IdentityUser>>();
             services.AddSingleton<ResourceService>();
+            services.AddSingleton<TaskService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -62,6 +69,10 @@ namespace ProjectManagementSystem
             app.UseStaticFiles();
 
             app.UseRouting();
+
+            app.ApplicationServices
+             .UseBootstrapProviders()
+             .UseFontAwesomeIcons();
 
             app.UseAuthentication();
             app.UseAuthorization();
