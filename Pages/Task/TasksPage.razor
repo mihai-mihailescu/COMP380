@@ -1,5 +1,4 @@
 ﻿@page "/tasks"
-@using System.Globalization; 
 @using Blazorise.DataGrid
 @using ProjectManagementSystem.Data.Tasks
 @inject TaskService TaskService
@@ -8,19 +7,19 @@
 @code {
     List<Tasks> tasks;
     Tasks task = new Tasks();
+    List<string> predecessorTaskTempList = new List<string>();
+    List<string> successorTaskTempList = new List<string>();
+    List<string> issueTempList = new List<string>();
+    List<string> summaryTasksTempList = new List<string>();
+    List<string> groupTaskTempList = new List<string>();
+    string predecessorTask;
+    string successorTask;
+    string issue;
+    string groupTask;
     bool taskList;
     bool taskDetails;
     bool createTask;
-    string selectedResource;
-    DateTime? expectedStartDate;
-    DateTime? expectedEndDate;
-    string expectedDurationInDays;
-    DateTime? actualStartDate;
-    DateTime? actualEndDate;
-    string actualDurationInDays;
-    string percentageCompleted;
-    List<string> selectedPredecessors = new List<string>();
-
+    bool success;
 
     protected override async Task OnInitializedAsync()
     {
@@ -28,7 +27,21 @@
         taskList = true;
         taskDetails = false;
         createTask = false;
+
+        //Create our temporary issue list
+        CreateIssueList();
     }
+
+
+
+    private void CreateIssueList()
+    {
+        issueTempList.Add("Issue 1");
+        issueTempList.Add("Issue 2");
+        issueTempList.Add("Issue 3");
+        issueTempList.Add("Issue 4");
+    }
+
 
     private void OnEditClick(Guid taskId)
     {
@@ -36,51 +49,74 @@
         taskList = false;
         taskDetails = true;
         createTask = false;
+        success = false;
 
         //get the task details we want to show from our list of tasks
         this.task = this.tasks.Find(x => x.Id.Equals(taskId));
 
-        this.selectedResource = this.task.ResourceAssigned;
-        this.expectedStartDate = this.task.ExpectedStartDate;
-        this.expectedEndDate = this.task.ExpectedEndDate;
+        OnExpectedEndDateChange(this.task.ExpectedEndDate);
+        OnActualEndDateChange(this.task.ActualEndDate);
+        
+        task.PercentCompleted = task.PercentCompleted ?? "0%";
 
-        //calculate the expected start and end date time difference in days
-        if(this.expectedStartDate != null)
+        foreach (var task in tasks)
         {
-            var expectedTimeDifference = this.expectedEndDate.Value - this.expectedStartDate.Value;
-            this.expectedDurationInDays = ((int)expectedTimeDifference.TotalDays).ToString() + " day(s)";
+            var successorTaskName = this.task.SuccessorTasks.Find(x => x.Equals(task.Name));
+            if (task.Name != successorTaskName && task.Name != this.task.Name)
+            {
+                successorTaskTempList.Add(task.Name);
+            }
+            var predecessorTaskName = this.task.PredecessorTasks.Find(x => x.Equals(task.Name));
+            if (task.Name != predecessorTaskName && task.Name != this.task.Name)
+            {
+                predecessorTaskTempList.Add(task.Name);
+            }
+        }
+
+        summaryTasksTempList.Add(string.Empty);
+        foreach (var task in tasks)
+        {
+            if (task.TaskType == TaskType.Summary && task.Name != this.task.Name)
+            {
+                summaryTasksTempList.Add(task.Name);
+            }
+        }
+
+        foreach (var task in tasks)
+        {
+            if (task.Name != this.task.Name)
+            {
+                groupTaskTempList.Add(task.Name);
+            }
+        }
+    }
+
+    private void OnExpectedEndDateChange(DateTime? endDate)
+    {
+        this.task.ExpectedEndDate = endDate;
+        if (this.task.ExpectedStartDate != null)
+        {
+            var expectedTimeDifference = this.task.ExpectedEndDate.Value - this.task.ExpectedStartDate.Value;
+            this.task.ExpectedDuration = ((int)expectedTimeDifference.TotalDays).ToString() + " day(s)";
         }
         else
         {
-            this.expectedDurationInDays = "0 days";
+            this.task.ExpectedDuration = "0 days";
         }
+    }
 
-        this.actualStartDate = this.task.ActualStartDate;
-        this.actualEndDate = this.task.ActualEndDate;
-
-        //calculate the actual start and end date time difference in days
-        if(this.actualStartDate != null)
+    private void OnActualEndDateChange(DateTime? endDate)
+    {
+        this.task.ActualEndDate = endDate;
+        if (this.task.ActualStartDate != null)
         {
-            var actualTimeDifference = this.actualEndDate.Value - this.actualStartDate.Value;
-            this.actualDurationInDays = ((int)actualTimeDifference.TotalDays).ToString() + " day(s)";
+            var actualTimeDifference = this.task.ActualEndDate.Value - this.task.ActualStartDate.Value;
+            this.task.ActualDuration = ((int)actualTimeDifference.TotalDays).ToString() + " day(s)";
         }
         else
         {
-            this.actualDurationInDays = "0 days";
+            this.task.ActualDuration = "0 days";
         }
-
-        //get percentage completed
-        if(task.PercentCompleted != null)
-        {
-            percentageCompleted = task.PercentCompleted?.ToString("P", CultureInfo.InvariantCulture);
-        }
-        else
-        {
-            percentageCompleted = "0%";
-        }
-
-        this.selectedPredecessors = this.task.PredecessorTasks;
-
     }
 
     private void OnCreateTaskClick()
@@ -97,19 +133,60 @@
         createTask = false;
     }
 
+    private void ClickSave()
+    {
+        //find the existing task and set it equal to the updated task
+        tasks[tasks.FindIndex(x => x.Equals(task))] = task;
+        success = true;
+    }
+
     private void OnDeleteClick(Guid Id)
     {
         tasks.RemoveAll(x => x.Id == Id);
     }
 
-    private void OnSelectedResourceChanged(string resource)
+    private void OnAddPredecessorTaskClick()
     {
-        this.selectedResource = resource;
+        if (predecessorTask == null)
+        {
+            return;
+        }
+        this.task.PredecessorTasks.Add(predecessorTask);
+        this.predecessorTaskTempList.Remove(predecessorTask);
+        predecessorTask = null;
     }
 
-    private void OnSelectedPredecessorChanged(string predecessor)
+    private void OnAddSuccessorTaskClick()
     {
-        this.selectedPredecessors.Add(predecessor);
+        if (successorTask == null)
+        {
+            return;
+        }
+        this.task.SuccessorTasks.Add(successorTask);
+        this.successorTaskTempList.Remove(successorTask);
+        successorTask = null;
+    }
+
+    private void OnAddIssueClick()
+    {
+        if (issue == null)
+        {
+            return;
+        }
+        this.task.ListOfIssues.Add(issue);
+        this.issueTempList.Remove(issue);
+        issue = null;
+    }
+
+    private void OnAddGroupTaskClick()
+    {
+        if (groupTask == null)
+        {
+            return;
+        }
+        this.task.GroupOtherTasks.Add(groupTask);
+        this.groupTaskTempList.Remove(groupTask);
+        groupTask = null;
     }
 }
 
@@ -148,245 +225,257 @@ else if (taskList)
 }
 else if (taskDetails)
 {
-<div class="container-fluid">
-    <h1>Task Details</h1>
-    <div style="padding-bottom:1em;">
-        <Button class="back-button" @onclick="ClickBack">Back</Button>
-    </div>
-    
-    <div class="list-table">
+    <div class="container-fluid">
+        <h1>Task Details</h1>
+        <div style="padding-bottom:1em;">
+            <Button class="back-button" @onclick="ClickBack">Back</Button>
+        </div>
 
-        <Field Horizontal="true">
-            <FieldLabel ColumnSize="ColumnSize.Is2">Name</FieldLabel>
-            <FieldBody ColumnSize="ColumnSize.Is10">
-                <TextEdit Text="@task.Name" />
-            </FieldBody>
-        </Field>
-        <Field Horizontal="true">
-            <FieldLabel ColumnSize="ColumnSize.Is2">Description</FieldLabel>
-            <FieldBody ColumnSize="ColumnSize.Is10">
-                <TextEdit Text="@task.Description" />
-            </FieldBody>
-        </Field>
-        <Field Horizontal="true">
-            <FieldLabel ColumnSize="ColumnSize.Is2">Resource Assigned</FieldLabel>
-            <FieldBody ColumnSize="ColumnSize.IsAuto">
-                <Select TValue="string" SelectedValue="@this.selectedResource" SelectedValueChanged="@(OnSelectedResourceChanged)">
-                    @foreach (var resource in @tasks)
-                    {
-                        <SelectItem Value="resource.ResourceAssigned">@resource.ResourceAssigned</SelectItem>
-                    }
-                </Select>
-            </FieldBody>
-        </Field>
-        <Field Horizontal="true">
-            <FieldLabel ColumnSize="ColumnSize.Is2">Expected Start Date</FieldLabel>
-            <FieldBody ColumnSize="ColumnSize.IsAuto">
-                <DateEdit TValue="DateTime?" @bind-Date="@this.expectedStartDate" />
-            </FieldBody>
-        </Field>
-        <Field Horizontal="true">
-            <FieldLabel ColumnSize="ColumnSize.Is2">Expected End Date</FieldLabel>
-            <FieldBody ColumnSize="ColumnSize.IsAuto">
-                <DateEdit TValue="DateTime?" @bind-Date="@this.expectedEndDate" />
-            </FieldBody>
-        </Field>
-        <Field Horizontal="true">
-            <FieldLabel ColumnSize="ColumnSize.Is2">Expected Duration</FieldLabel>
-            <FieldBody ColumnSize="ColumnSize.IsAuto">
-                <TextEdit ReadOnly="true" Text="@this.expectedDurationInDays" />
-            </FieldBody>
-        </Field>
-        <Field Horizontal="true">
-            <FieldLabel ColumnSize="ColumnSize.Is2">Expected Effort</FieldLabel>
-            <FieldBody ColumnSize="ColumnSize.IsAuto">
-                <TextEdit Text="@task.ExpectedEffort.ToString()" />
-            </FieldBody>
-        </Field>
-        <Field Horizontal="true">
-            <FieldLabel ColumnSize="ColumnSize.Is2">Actual Start Date</FieldLabel>
-            <FieldBody ColumnSize="ColumnSize.IsAuto">
-                <DateEdit TValue="DateTime?" @bind-Date="@this.actualStartDate" />
-            </FieldBody>
-        </Field>
-        <Field Horizontal="true">
-            <FieldLabel ColumnSize="ColumnSize.Is2">Actual End Date</FieldLabel>
-            <FieldBody ColumnSize="ColumnSize.IsAuto">
-                <DateEdit TValue="DateTime?" @bind-Date="@this.actualEndDate" />
-            </FieldBody>
-        </Field>
-        <Field Horizontal="true">
-            <FieldLabel ColumnSize="ColumnSize.Is2">Actual Duration</FieldLabel>
-            <FieldBody ColumnSize="ColumnSize.IsAuto">
-                <TextEdit ReadOnly="true" Text="@this.actualDurationInDays" />
-            </FieldBody>
-        </Field>
-        <Field Horizontal="true">
-            <FieldLabel ColumnSize="ColumnSize.Is2">Effort Completed</FieldLabel>
-            <FieldBody ColumnSize="ColumnSize.IsAuto">
-                <TextEdit Text="@task.EffortCompleted.ToString()" />
-            </FieldBody>
-        </Field>
-        <Field Horizontal="true">
-            <FieldLabel ColumnSize="ColumnSize.Is2">Actual Effort</FieldLabel>
-            <FieldBody ColumnSize="ColumnSize.IsAuto">
-                <TextEdit Text="@task.ActualEffort.ToString()" />
-            </FieldBody>
-        </Field>
-        <Field Horizontal="true">
-            <FieldLabel ColumnSize="ColumnSize.Is2">Percent Completed</FieldLabel>
-            <FieldBody ColumnSize="ColumnSize.IsAuto">
-                <TextEdit Text="@this.percentageCompleted" />
-            </FieldBody>
-        </Field>
-        <Field Horizontal="true">
-            <FieldLabel ColumnSize="ColumnSize.Is2">Predecessor Tasks</FieldLabel>
-            <FieldBody ColumnSize="ColumnSize.Is5">
-                <Select TValue="string" Multiple="false" SelectedValues="@this.selectedPredecessors" SelectedValueChanged="@(OnSelectedPredecessorChanged)">
-                    @foreach (var item in @tasks)
-                    {
-                        <SelectItem Value="item.Name">@item.Name</SelectItem>
-                    }
-                </Select>
-            </FieldBody>
-        </Field>
-        <Field Horizontal="true">
-            <FieldLabel ColumnSize="ColumnSize.Is2">Successor Tasks</FieldLabel>
-            <FieldBody ColumnSize="ColumnSize.Is5">
-                <Select TValue="string" Multiple="false" SelectedValues="@this.selectedPredecessors" SelectedValueChanged="@(OnSelectedPredecessorChanged)">
-                    @foreach (var item in @tasks)
-                    {
-                        <SelectItem Value="item.Name">@item.Name</SelectItem>
-                    }
-                </Select>
-            </FieldBody>
-        </Field>        
+        <div class="list-table">
+
+            <Field Horizontal="true">
+                <FieldLabel ColumnSize="ColumnSize.Is2">Name</FieldLabel>
+                <FieldBody ColumnSize="ColumnSize.Is10">
+                    <TextEdit @bind-Text="@task.Name" />
+                </FieldBody>
+            </Field>
+            <Field Horizontal="true">
+                <FieldLabel ColumnSize="ColumnSize.Is2">Description</FieldLabel>
+                <FieldBody ColumnSize="ColumnSize.Is10">
+                    <TextEdit @bind-Text="@task.Description" />
+                </FieldBody>
+            </Field>
+            <Field Horizontal="true">
+                <FieldLabel ColumnSize="ColumnSize.Is2">Resource Assigned</FieldLabel>
+                <FieldBody ColumnSize="ColumnSize.IsAuto">
+                    <Select TValue="string" @bind-SelectedValue="@this.task.ResourceAssigned">
+                        @foreach (var resource in @tasks)
+                        {
+                            <SelectItem Value="resource.ResourceAssigned">@resource.ResourceAssigned</SelectItem>
+                        }
+                    </Select>
+                </FieldBody>
+            </Field>
+            <Field Horizontal="true">
+                <FieldLabel ColumnSize="ColumnSize.Is2">Task Type</FieldLabel>
+                <FieldBody ColumnSize="ColumnSize.IsAuto">
+                    <Select TValue="TaskType" @bind-SelectedValue="@this.task.TaskType">
+                        <SelectItem Value="@this.task.TaskType">@this.task.TaskType</SelectItem>
+                        @if (TaskType.Milestone != this.task.TaskType)
+                        {
+                            <SelectItem Value="TaskType.Milestone">@TaskType.Milestone</SelectItem>
+                        }
+                        @if (TaskType.Regular != this.task.TaskType)
+                        {
+                            <SelectItem Value="TaskType.Regular">@TaskType.Regular</SelectItem>
+                        }
+                        @if (TaskType.Summary != this.task.TaskType)
+                        {
+                            <SelectItem Value="TaskType.Summary">@TaskType.Summary</SelectItem>
+                        }
+                    </Select>
+                </FieldBody>
+            </Field>
+            <Field Horizontal="true">
+                <FieldLabel ColumnSize="ColumnSize.Is2">Expected Start Date</FieldLabel>
+                <FieldBody ColumnSize="ColumnSize.IsAuto">
+                    <DateEdit TValue="DateTime?" @bind-Date="@this.task.ExpectedStartDate" />
+                </FieldBody>
+            </Field>
+            <Field Horizontal="true">
+                <FieldLabel ColumnSize="ColumnSize.Is2">Expected End Date</FieldLabel>
+                <FieldBody ColumnSize="ColumnSize.IsAuto">
+                    <DateEdit TValue="DateTime?" Date="@this.task.ExpectedEndDate" DateChanged="@OnExpectedEndDateChange" />
+                </FieldBody>
+            </Field>
+            <Field Horizontal="true">
+                <FieldLabel ColumnSize="ColumnSize.Is2">Expected Duration</FieldLabel>
+                <FieldBody ColumnSize="ColumnSize.IsAuto">
+                    <TextEdit ReadOnly="true" @bind-Text="@this.task.ExpectedDuration" />
+                </FieldBody>
+            </Field>
+            <Field Horizontal="true">
+                <FieldLabel ColumnSize="ColumnSize.Is2">Expected Effort</FieldLabel>
+                <FieldBody ColumnSize="ColumnSize.IsAuto">
+                    <TextEdit @bind-Value="@this.task.ExpectedEffort" />
+                </FieldBody>
+            </Field>
+            <Field Horizontal="true">
+                <FieldLabel ColumnSize="ColumnSize.Is2">Actual Start Date</FieldLabel>
+                <FieldBody ColumnSize="ColumnSize.IsAuto">
+                    <DateEdit TValue="DateTime?" @bind-Date="@this.task.ActualStartDate" />
+                </FieldBody>
+            </Field>
+            <Field Horizontal="true">
+                <FieldLabel ColumnSize="ColumnSize.Is2">Actual End Date</FieldLabel>
+                <FieldBody ColumnSize="ColumnSize.IsAuto">
+                    <DateEdit TValue="DateTime?" Date="@this.task.ActualEndDate" DateChanged="@OnActualEndDateChange"/>
+                </FieldBody>
+            </Field>
+            <Field Horizontal="true">
+                <FieldLabel ColumnSize="ColumnSize.Is2">Actual Duration</FieldLabel>
+                <FieldBody ColumnSize="ColumnSize.IsAuto">
+                    <TextEdit ReadOnly="true" @bind-Value="@this.task.ActualDuration" />                    
+                </FieldBody>
+            </Field>
+            <Field Horizontal="true">
+                <FieldLabel ColumnSize="ColumnSize.Is2">Effort Completed</FieldLabel>
+                <FieldBody ColumnSize="ColumnSize.IsAuto">
+                    <TextEdit @bind-Value="@this.task.EffortCompleted" />
+                </FieldBody>
+            </Field>
+            <Field Horizontal="true">
+                <FieldLabel ColumnSize="ColumnSize.Is2">Actual Effort</FieldLabel>
+                <FieldBody ColumnSize="ColumnSize.IsAuto">
+                    <TextEdit @bind-Value="@this.task.ActualEffort" />
+                </FieldBody>
+            </Field>
+            <Field Horizontal="true">
+                <FieldLabel ColumnSize="ColumnSize.Is2">Percent Completed</FieldLabel>
+                <FieldBody ColumnSize="ColumnSize.IsAuto">
+                    <TextEdit @bind-Text="@this.task.PercentCompleted" />
+                </FieldBody>
+            </Field>
+            <Field Horizontal="true">
+                <FieldLabel ColumnSize="ColumnSize.Is2">Predecessor Tasks</FieldLabel>
+                <FieldBody ColumnSize="ColumnSize.Is3">
+                    <Select TValue="string" @bind-SelectedValue="@predecessorTask">
+                        <SelectItem Value="@predecessorTask">@predecessorTask</SelectItem>
+                        @foreach (var item in predecessorTaskTempList)
+                        {
+                            <SelectItem Value="item">@item</SelectItem>
+                        }
+                    </Select>
+                </FieldBody>
+                <Button Color="Color.Primary" Clicked="OnAddPredecessorTaskClick">Add</Button>
+            </Field>
+            <Field Horizontal="true">
+                <FieldLabel ColumnSize="ColumnSize.Is2"></FieldLabel>
+                <FieldBody ColumnSize="ColumnSize.Is3">
+                    <Select Multiple="true" TValue="string" SelectedValue="@this.predecessorTask">
+                        @foreach (var item in task.PredecessorTasks)
+                        {
+                            <SelectItem Value="@item">@item</SelectItem>
+                        }
+                    </Select>
+                </FieldBody>
+            </Field>
+            <Field Horizontal="true">
+                <FieldLabel ColumnSize="ColumnSize.Is2">Successor Tasks</FieldLabel>
+                <FieldBody ColumnSize="ColumnSize.Is3">
+                    <Select TValue="string" @bind-SelectedValue="@successorTask">
+                        <SelectItem Value="@successorTask">@successorTask</SelectItem>
+                        @foreach (var item in successorTaskTempList)
+                        {
+                            <SelectItem Value="item">@item</SelectItem>
+                        }
+                    </Select>
+                </FieldBody>
+                <Button Color="Color.Primary" Clicked="OnAddSuccessorTaskClick">Add</Button>
+            </Field>
+            <Field Horizontal="true">
+                <FieldLabel ColumnSize="ColumnSize.Is2"></FieldLabel>
+                <FieldBody ColumnSize="ColumnSize.Is3">
+                    <Select Multiple="true" TValue="string" SelectedValue="@this.successorTask">
+                        @foreach (var item in task.SuccessorTasks)
+                        {
+                            <SelectItem Value="@item">@item</SelectItem>
+                        }
+                    </Select>
+                </FieldBody>
+            </Field>
+            <Field Horizontal="true">
+                <FieldLabel ColumnSize="ColumnSize.Is2">Issues</FieldLabel>
+                <FieldBody ColumnSize="ColumnSize.Is3">
+                    <Select TValue="string" @bind-SelectedValue="@issue">
+                        <SelectItem Value="@issue">@issue</SelectItem>
+                        @foreach (var item in issueTempList)
+                        {
+                            <SelectItem Value="item">@item</SelectItem>
+                        }
+                    </Select>
+                </FieldBody>
+                <Button Color="Color.Primary" Clicked="OnAddIssueClick">Add</Button>
+            </Field>
+            <Field Horizontal="true">
+                <FieldLabel ColumnSize="ColumnSize.Is2"></FieldLabel>
+                <FieldBody ColumnSize="ColumnSize.Is3">
+                    <Select Multiple="true" TValue="string" SelectedValue="@this.issue">
+                        @foreach (var item in task.ListOfIssues)
+                        {
+                            <SelectItem Value="@item">@item</SelectItem>
+                        }
+                    </Select>
+                </FieldBody>
+            </Field>
+            <Field Horizontal="true">
+                <FieldLabel ColumnSize="ColumnSize.Is2">Parent Summary Task</FieldLabel>
+                <FieldBody ColumnSize="ColumnSize.Is3">
+                    <Select TValue="string" @bind-SelectedValue="@this.task.ParentSummaryTask">
+                        @foreach (var task in summaryTasksTempList)
+                        {
+                            <SelectItem Value="task">@task</SelectItem>
+                        }
+                    </Select>
+                </FieldBody>
+            </Field>
+            <Field Horizontal="true">
+                <FieldLabel ColumnSize="ColumnSize.Is2">Group Tasks</FieldLabel>
+                <FieldBody ColumnSize="ColumnSize.Is3">
+                    <Select TValue="string" @bind-SelectedValue="@this.groupTask">
+                        <SelectItem Value="@this.groupTask">@this.groupTask</SelectItem>
+                        @foreach (var item in groupTaskTempList)
+                        {
+                            <SelectItem Value="item">@item</SelectItem>
+                        }
+                    </Select>
+                </FieldBody>
+                <Button Color="Color.Primary" Clicked="OnAddGroupTaskClick">Add</Button>
+            </Field>
+            <Field Horizontal="true">
+                <FieldLabel ColumnSize="ColumnSize.Is2"></FieldLabel>
+                <FieldBody ColumnSize="ColumnSize.Is3">
+                    <Select Multiple="true" TValue="string" SelectedValue="@this.groupTask">
+                        @foreach (var item in task.GroupOtherTasks)
+                        {
+                            <SelectItem Value="@item">@item</SelectItem>
+                        }
+                    </Select>
+                </FieldBody>
+            </Field>
+        </div>
+        <div style="padding-top:1em; padding-bottom:2em;">
+            <Button class="back-button" @onclick="ClickBack">Back</Button>
+            @if (!success)
+            {
+                <Button class="save-button" @onclick="ClickSave">Save</Button>
+            }
+            else
+            {
+                <Button class="save-button" @onclick="ClickSave">Save Successful</Button>
+            }
+        </div>
+
     </div>
-    <div style="padding-top:1em; padding-bottom:2em;">
-        <Button class="back-button" @onclick="ClickBack">Back</Button>
-    </div>
-    
-</div>
 }
 else if (createTask)
 {
-<div class="container-fluid">
-    <h1>Create Task</h1>
-    <div style="padding-bottom:1em;">
-        <Button class="back-button" @onclick="ClickBack">Back</Button>
+    <div class="container-fluid">
+        <h1>Create Task</h1>
+
+        <div style="padding-top:1em; padding-bottom:2em;">
+            <Button class="back-button" @onclick="ClickBack">Back</Button>
+            @if (!success)
+            {
+                <Button class="save-button" @onclick="ClickSave">Save</Button>
+            }
+            else
+            {
+                <Button class="save-button" @onclick="ClickSave">Save Successful</Button>
+            }
+
+        </div>
     </div>
-    <div class="list-table">
-        <Field Horizontal="true">
-            <FieldLabel ColumnSize="ColumnSize.Is2">Name</FieldLabel>
-            <FieldBody ColumnSize="ColumnSize.Is10">
-                <TextEdit Text="" />
-            </FieldBody>
-        </Field>
-        <Field Horizontal="true">
-            <FieldLabel ColumnSize="ColumnSize.Is2">Description</FieldLabel>
-            <FieldBody ColumnSize="ColumnSize.Is10">
-                <TextEdit Text="" />
-            </FieldBody>
-        </Field>
-        <Field Horizontal="true">
-            <FieldLabel ColumnSize="ColumnSize.Is2">Resource Assigned</FieldLabel>
-            <FieldBody ColumnSize="ColumnSize.IsAuto">
-                <Select TValue="string" SelectedValue="@this.selectedResource" SelectedValueChanged="@(OnSelectedResourceChanged)">
-                    <SelectItem Value="string.Empty">Please Select</SelectItem>
-                    @foreach (var resource in @tasks)
-                    {
-                        <SelectItem Value="resource.ResourceAssigned">@resource.ResourceAssigned</SelectItem>
-                    }
-                </Select>
-            </FieldBody>
-        </Field>
-        <Field Horizontal="true">
-            <FieldLabel ColumnSize="ColumnSize.Is2">Expected Start Date</FieldLabel>
-            <FieldBody ColumnSize="ColumnSize.IsAuto">
-                <DateEdit TValue="DateTime?" @bind-Date="@this.expectedStartDate" />
-            </FieldBody>
-        </Field>
-        <Field Horizontal="true">
-            <FieldLabel ColumnSize="ColumnSize.Is2">Expected End Date</FieldLabel>
-            <FieldBody ColumnSize="ColumnSize.IsAuto">
-                <DateEdit TValue="DateTime?" @bind-Date="@this.expectedEndDate" />
-            </FieldBody>
-        </Field>
-        <Field Horizontal="true">
-            <FieldLabel ColumnSize="ColumnSize.Is2">Expected Duration</FieldLabel>
-            <FieldBody ColumnSize="ColumnSize.IsAuto">
-                <TextEdit ReadOnly="true" Text="@this.expectedDurationInDays" />
-            </FieldBody>
-        </Field>
-        <Field Horizontal="true">
-            <FieldLabel ColumnSize="ColumnSize.Is2">Expected Effort</FieldLabel>
-            <FieldBody ColumnSize="ColumnSize.IsAuto">
-                <TextEdit Text="" />
-            </FieldBody>
-        </Field>
-        <Field Horizontal="true">
-            <FieldLabel ColumnSize="ColumnSize.Is2">Actual Start Date</FieldLabel>
-            <FieldBody ColumnSize="ColumnSize.IsAuto">
-                <DateEdit TValue="DateTime?" @bind-Date="@this.actualStartDate" />
-            </FieldBody>
-        </Field>
-        <Field Horizontal="true">
-            <FieldLabel ColumnSize="ColumnSize.Is2">Actual End Date</FieldLabel>
-            <FieldBody ColumnSize="ColumnSize.IsAuto">
-                <DateEdit TValue="DateTime?" @bind-Date="@this.actualEndDate" />
-            </FieldBody>
-        </Field>
-        <Field Horizontal="true">
-            <FieldLabel ColumnSize="ColumnSize.Is2">Actual Duration</FieldLabel>
-            <FieldBody ColumnSize="ColumnSize.IsAuto">
-                <TextEdit ReadOnly="true" Text="@this.actualDurationInDays" />
-            </FieldBody>
-        </Field>
-        <Field Horizontal="true">
-            <FieldLabel ColumnSize="ColumnSize.Is2">Effort Completed</FieldLabel>
-            <FieldBody ColumnSize="ColumnSize.IsAuto">
-                <TextEdit Text="" />
-            </FieldBody>
-        </Field>
-        <Field Horizontal="true">
-            <FieldLabel ColumnSize="ColumnSize.Is2">Actual Effort</FieldLabel>
-            <FieldBody ColumnSize="ColumnSize.IsAuto">
-                <TextEdit Text="" />
-            </FieldBody>
-        </Field>
-        <Field Horizontal="true">
-            <FieldLabel ColumnSize="ColumnSize.Is2">Percent Completed</FieldLabel>
-            <FieldBody ColumnSize="ColumnSize.IsAuto">
-                <TextEdit Text="@this.percentageCompleted" />
-            </FieldBody>
-        </Field>
-        <Field Horizontal="true">
-            <FieldLabel ColumnSize="ColumnSize.Is2">Predecessor Tasks</FieldLabel>
-            <FieldBody ColumnSize="ColumnSize.Is5">
-                <Select TValue="string" Multiple="false" SelectedValues="@this.selectedPredecessors" SelectedValueChanged="@(OnSelectedPredecessorChanged)">
-                    @foreach (var item in @tasks)
-                    {
-                        <SelectItem Value="item.Name">@item.Name</SelectItem>
-                    }
-                </Select>
-            </FieldBody>
-        </Field>
-        <Field Horizontal="true">
-            <FieldLabel ColumnSize="ColumnSize.Is2">Successor Tasks</FieldLabel>
-            <FieldBody ColumnSize="ColumnSize.Is5">
-                <Select TValue="string" Multiple="false" SelectedValues="@this.selectedPredecessors" SelectedValueChanged="@(OnSelectedPredecessorChanged)">
-                    @foreach (var item in @tasks)
-                    {
-                        <SelectItem Value="item.Name">@item.Name</SelectItem>
-                    }
-                </Select>
-            </FieldBody>
-        </Field>        
-    </div>
-    <div style="padding-top:1em; padding-bottom:2em;">
-        <Button class="back-button" @onclick="ClickBack">Back</Button>
-    </div>
-</div>
 }
 
 

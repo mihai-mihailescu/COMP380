@@ -23,6 +23,11 @@
     background-color: steelblue;    
 }
 
+.save-button {
+    background-color: darkseagreen;
+    float:right;
+}
+
 .list-table {
     width: auto;
     padding: 20px;
