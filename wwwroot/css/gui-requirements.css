@@ -12,7 +12,7 @@
 }
 
 .create-button{
-    background-color: lightsteelblue;    
+    background-color: springgreen;    
 }
 
 .create-div{
@@ -33,4 +33,14 @@
     padding: 20px;
     border: 3px solid black;
     margin: auto;
+}
+
+.gantt-button {
+    float: right;
+    margin: 4px;
+}
+
+.tabular-button {
+    float: right;
+    margin: 4px;
 }
