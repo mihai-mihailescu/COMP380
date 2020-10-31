@@ -1,5 +1,5 @@
 ﻿@page "/resources"
-@using ProjectManagementSystem.Data.Resources
+@using ProjectManagementSystem.Features.Resources
 @inject ResourceService ResourceService
 
 
@@ -69,7 +69,7 @@ else if (resourceList)
                         <tr>
                             <td>@resource.Name</td>
                             <td>@resource.Title</td>
-                            <td>@resource.AssignedTaskId</td>
+                            @*<td>@resource.AssignedTaskId</td>*@
                             <td><button class="edit-button" @onclick="@(e => ClickEdit(resource.Id))">Edit</button></td>
                             <td><button class="delete-button" @onclick="@(e => ClickDelete(resource.Id))">Delete</button></td>
                         </tr>

@@ -1,0 +1,86 @@
+﻿@page "/tasks"
+@using Blazorise.DataGrid
+@using ProjectManagementSystem.Features.Tasks.Models
+@using ProjectManagementSystem.Data 
+@inject TaskService TaskService
+@inject NavigationManager nav
+@inject ApplicationDbContext db
+
+
+@code {
+    List<TaskListModel> taskListModelData = new List<TaskListModel>();
+
+
+    protected override async System.Threading.Tasks.Task OnInitializedAsync()
+    {
+        taskListModelData = await TaskService.GetTasksListDataAsync();
+    }
+
+    private void OnEditClick(Guid taskId)
+    {
+        nav.NavigateTo("/tasks/" + taskId);
+    }
+
+    private async void OnDeleteClick(Guid taskId)
+    {
+        var taskDelete = await TaskService.GetTaskById(taskId);
+        db.Remove(taskDelete.Task);
+        var result = await db.SaveChangesAsync();
+        if(result > 0)
+        {
+            // Need to get our new data and refresh the component since we just deleted something from the Grid
+            taskListModelData = taskListModelData.FindAll(x => x.TaskId != taskId).ToList();
+            StateHasChanged();
+        }
+    }
+
+    private void OnCreateTaskClick()
+    {
+        nav.NavigateTo("/tasks/create");
+    }
+
+    private void OnTabularViewClick()
+    {
+        nav.NavigateTo("/tasks/tabularview");
+    }
+
+    private void OnGanttChartClick()
+    {
+        nav.NavigateTo("/tasks/ganttchart");
+    }
+}
+
+
+@if (this.taskListModelData == null)
+{
+    <h1>Loading...</h1>
+}
+else if (this.taskListModelData.Count == 0)
+{
+    <h1>There are no tasks</h1>
+}
+else
+{
+    <div class="container-fluid">
+        <h1>Tasks List</h1>
+        <div class="list-table">
+            <DataGrid TItem="TaskListModel" Data="@taskListModelData" Sortable="true" Filterable="true" ShowPager="true" PageSize="20" Striped="true" Borderless="true" Bordered="true" Editable="true">
+                <DataGridColumn TItem="TaskListModel" Field="@nameof(TaskListModel.TaskName)" Caption="Name"></DataGridColumn>
+                <DataGridColumn TItem="TaskListModel" Field="@nameof(TaskListModel.ResourceName)" Caption="Assigned Resource"></DataGridColumn>
+                <DataGridColumn TItem="TaskListModel" Field="@nameof(TaskListModel.ExpectedStartDate)" Caption="Expected Start Date"></DataGridColumn>
+                <DataGridColumn TItem="TaskListModel" Field="@nameof(TaskListModel.ExpectedEndDate)" Caption="Expected End Date"></DataGridColumn>
+                <DataGridColumn TItem="TaskListModel" Field="@nameof(TaskListModel.TaskType)" Caption="Type"></DataGridColumn>
+                <DataGridCommandColumn TItem="TaskListModel">
+                    <NewCommandTemplate Context="task"></NewCommandTemplate>
+                    <EditCommandTemplate Context="task"><Button Color="Color.Primary" Clicked="@(e=> OnEditClick(task.Item.TaskId))">Edit</Button></EditCommandTemplate>
+                    <DeleteCommandTemplate Context="task"><Button Color="Color.Danger" Clicked="@(e=> OnDeleteClick(task.Item.TaskId))">Delete</Button></DeleteCommandTemplate>
+                </DataGridCommandColumn>
+            </DataGrid>
+        </div>
+        <div style="padding-top:1em;">
+            <Button Clicked="@OnCreateTaskClick" Color="Color.Info">Create Task</Button>
+            <Button Clicked="@OnTabularViewClick" Color="Color.Dark" class="tabular-button">Tabular View</Button>
+            <Button Clicked="@OnGanttChartClick" Color="Color.Secondary" class="gantt-button">Gantt Chart</Button>
+        </div>
+    </div>
+}

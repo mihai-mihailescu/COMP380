@@ -1,0 +1,601 @@
+﻿@page "/tasks/{TaskId:guid}"
+@page "/tasks/create"
+@using ProjectManagementSystem.Features.Tasks.Models
+@using ProjectManagementSystem.Features.Resources
+@using ProjectManagementSystem.Features.Issues
+@using ProjectManagementSystem.Data
+@using ProjectManagementSystem.Features.Shared
+@inject TaskService TaskService
+@inject ResourceService ResourceService
+@inject IssueService IssueService
+@inject NavigationManager navigation
+@inject ApplicationDbContext db
+
+
+@code {
+    [Parameter]
+    public Guid TaskId { get; set; }
+
+    TaskModel taskModel = new TaskModel();
+    List<Tasks.Task> tasks = new List<Tasks.Task>();
+    List<Resource> resources = new List<Resource>();
+    List<Issue> issues = new List<Issue>();
+    List<Issue> issueTempList = new List<Issue>();
+    List<Tasks.Task> successorTaskTempList = new List<Tasks.Task>();
+    List<Tasks.Task> predecessorTaskTempList = new List<Tasks.Task>();
+    List<Tasks.Task> taskGroupTempList = new List<Tasks.Task>();
+
+    Guid predecessorTaskId;
+    Guid successorTaskId;
+    Guid groupTaskId;
+    Guid issueId;
+
+    bool success;
+
+    protected override async System.Threading.Tasks.Task OnInitializedAsync()
+    {
+        //If TaskId is not empty, we know this is edit and we want to get the task details
+        if (TaskId != Guid.Empty)
+        {
+            taskModel = await TaskService.GetTaskById(TaskId);
+            if (taskModel.Resource == null)
+            {
+                taskModel.Resource = new Resource();
+            }
+        }
+
+        tasks = await TaskService.GetTasksDataAsync();
+        resources = await ResourceService.GetResourcesAsync();
+        issues = await IssueService.GetIssuesDataAsync();
+
+        //Create temp lists to give user options to select for multi select features
+        CreateTempTaskLists();
+
+    }
+
+    private void CreateTempTaskLists()
+    {
+
+        // Create our temp lists for predecessor, successor and group tasks
+        for (var i = 0; i < tasks.Count; i++)
+        {
+            TaskPredecessor taskPredecessor = new TaskPredecessor();
+            TaskSuccessor taskSuccessor = new TaskSuccessor();
+            TaskGroup taskGroup = new TaskGroup();
+
+            // Let's make sure we don't add our own task to the list
+            if (tasks[i].Id != taskModel.Task.Id)
+            {
+                // Check that the index is not larger than TaskPredecessor count otherwise we'll get an index exception
+                if (i < taskModel.Task.TaskPredecessor.Count)
+                {
+                    taskPredecessor = taskModel.Task.TaskPredecessor[i];
+                }
+                // Add all tasks to our predecessor temp list that are not already saved in the db
+                if (tasks[i].Id != taskPredecessor.PredecessorTaskId)
+                {
+                    predecessorTaskTempList.Add(tasks[i]);
+                }
+
+                // Check that the index is not larger than TaskSuccessor count otherwise we'll get an index exception
+                if (i < taskModel.Task.TaskSuccessor.Count)
+                {
+                    taskSuccessor = taskModel.Task.TaskSuccessor[i];
+                }
+                // Add all tasks to our successor temp list that are not already saved in the db
+                if (tasks[i].Id != taskSuccessor.SuccessorTaskId)
+                {
+                    successorTaskTempList.Add(tasks[i]);
+                }
+
+                // Check that the index is not larger than TaskGroup count otherwise we'll get an index exception
+                if (i < taskModel.Task.TaskGroup.Count)
+                {
+                    taskGroup = taskModel.Task.TaskGroup[i];
+                }
+
+                // Add all tasks to our group temp list that are not already saved in the db
+                if (tasks[i].Id != taskGroup.AssociatedTaskId)
+                {
+                    taskGroupTempList.Add(tasks[i]);
+                }
+            }
+        }
+
+        for (var i = 0; i < issues.Count; i++)
+        {
+            TaskIssue associatedIssue = new TaskIssue();
+            if (i < taskModel.Task.TaskIssue.Count)
+            {
+                associatedIssue = taskModel.Task.TaskIssue[i];
+            }
+
+            if (issues[i].Id != associatedIssue?.IssueId)
+            {
+                issueTempList.Add(issues[i]);
+            }
+        }
+    }
+
+    private void Save()
+    {
+        // If the name is empty, we cannot save because it is required
+        if (string.IsNullOrEmpty(taskModel.Task.Name))
+        {
+            return;
+        }
+
+        var entriesSaved = TaskService.SaveTask(taskModel.Task);
+
+        if (entriesSaved > 0)
+        {
+            success = true;
+        }
+    }
+
+    private void OnAddPredecessorTaskClick()
+    {
+        if (predecessorTaskId == null)
+        {
+            return;
+        }
+        // Get the predecessor from our temp list based off the selected predecessorTaskId
+        var predecessor = predecessorTaskTempList.Find(x => x.Id == predecessorTaskId);
+
+        // Add the successor data to our Task.TaskPredecessorSuccessor list
+        taskModel.Task.TaskPredecessor.Add(new TaskPredecessor { TaskId = taskModel.Task.Id, PredecessorTaskId = predecessorTaskId });
+
+        // Remove the predecessor from our temp list because we don't want the user to add it again
+        predecessorTaskTempList.Remove(predecessor);
+
+        // Set the predecessorTaskId to empty so we display Select...
+        predecessorTaskId = Guid.Empty;
+    }
+
+    private void OnRemovePredecessorClick()
+    {
+
+    }
+
+    private void OnAddSuccessorTaskClick()
+    {
+        if (successorTaskId == null)
+        {
+            return;
+        }
+        // Get the successor from our temp list based off the selected successorTaskId
+        var successor = successorTaskTempList.Find(x => x.Id == successorTaskId);
+
+        // Add the successor data to our Task.TaskPredecessorSuccessor list
+        taskModel.Task.TaskSuccessor.Add(new TaskSuccessor { TaskId = taskModel.Task.Id, SuccessorTaskId = successorTaskId });
+
+        // Remove the successor from our temp list because we don't want the user to add it again
+        successorTaskTempList.Remove(successor);
+
+        // Set the successorTaskId to empty so we display Select...
+        successorTaskId = Guid.Empty;
+    }
+
+    private void OnRemoveSuccessorClick()
+    {
+
+    }
+
+    private void OnAddGroupTaskClick()
+    {
+        // We do not want to add an empty guid
+        if (groupTaskId == null)
+        {
+            return;
+        }
+
+        // Get the groupTask from our temp list based off the selected groupTaskId
+        var groupTask = taskGroupTempList.Find(x => x.Id == groupTaskId);
+
+        // Add the group task data to our Task.TaskGroup list
+        taskModel.Task.TaskGroup.Add(new TaskGroup { TaskId = taskModel.Task.Id, AssociatedTaskId = groupTaskId });
+
+        // Remove the group task from our temp list because we don't want the user to add it again
+        taskGroupTempList.Remove(groupTask);
+
+        // Set the groupTaskId to empty so we display Select...
+        groupTaskId = Guid.Empty;
+    }
+
+    private void OnRemoveGroupTaskClick()
+    {
+
+    }
+
+    private void OnAddIssueClick()
+    {
+        // We do not want to add an empty guid
+        if (issueId == Guid.Empty)
+        {
+            return;
+        }
+
+        // Get the issue from our temp list based off the selected issueId
+        var issue = issueTempList.Find(x => x.Id == issueId);
+
+        // Add the TaskIssue data to our Task.TaskIssue list
+        taskModel.Task.TaskIssue.Add(new TaskIssue { TaskId = taskModel.Task.Id, Task = taskModel.Task, IssueId = issueId, Issue = issue });
+
+        // Remove the issue from our temp list because we don't want the user to add it again
+        issueTempList.Remove(issue);
+
+        // Set the issueId to empty so we display Select...
+        issueId = Guid.Empty;
+    }
+
+    private void OnRemoveIssueClick()
+    {
+        if (issueId == Guid.Empty)
+        {
+            return;
+        }
+
+        var issueToBeRemoved = taskModel.Task.TaskIssue.Single(x => x.IssueId == issueId);
+
+        if(issueToBeRemoved.IssueId == issueId)
+        {
+            taskModel.Task.TaskIssue.Remove(issueToBeRemoved);
+        }
+
+        issueTempList.Add(issueToBeRemoved.Issue);
+    }
+
+    private void OnExpectedEndDateChange(DateTime? endDate)
+    {
+        // Update duration on expected end date change
+        taskModel.Task.ExpectedEndDate = endDate;
+        if (taskModel.Task.ExpectedStartDate != null)
+        {
+            var expectedTimeDifference = taskModel.Task.ExpectedEndDate.Value - taskModel.Task.ExpectedStartDate.Value;
+            if ((int)expectedTimeDifference.TotalDays != 1)
+            {
+                taskModel.Task.ExpectedDuration = ((int)expectedTimeDifference.TotalDays).ToString() + " days";
+            }
+            else
+            {
+                taskModel.Task.ExpectedDuration = ((int)expectedTimeDifference.TotalDays).ToString() + " day";
+            }
+        }
+        else
+        {
+            taskModel.Task.ExpectedDuration = "0 days";
+        }
+    }
+
+    private void OnActualEndDateChange(DateTime? endDate)
+    {
+        // Update duration on actual end date change
+        taskModel.Task.ActualEndDate = endDate;
+        if (taskModel.Task.ActualStartDate != null)
+        {
+            var actualTimeDifference = taskModel.Task.ActualEndDate.Value - taskModel.Task.ActualStartDate.Value;
+            if ((int)actualTimeDifference.TotalDays != 1)
+            {
+                taskModel.Task.ActualDuration = ((int)actualTimeDifference.TotalDays).ToString() + " days";
+            }
+            else
+            {
+                taskModel.Task.ActualDuration = ((int)actualTimeDifference.TotalDays).ToString() + " day";
+            }
+        }
+        else
+        {
+            taskModel.Task.ActualDuration = "0 days";
+        }
+    }
+
+    private void ValidateNameExists(ValidatorEventArgs n)
+    {
+        var name = Convert.ToString(n.Value);
+
+        n.Status = string.IsNullOrEmpty(name) ? ValidationStatus.None : ValidationStatus.Success;
+    }
+
+    private void ClickBack()
+    {
+        navigation.NavigateTo("/tasks");
+    }
+
+    private void OnClearResourceClick()
+    {
+        taskModel.Task.ResourceId = null;
+    }
+
+    private void OnClearParentSummaryTaskClick()
+    {
+        taskModel.Task.ParentSummaryTaskId = null;
+    }
+}
+
+<div class="container-fluid">
+    @if (TaskId != Guid.Empty)
+    {
+        <h1>Edit Task</h1>
+    }
+    else
+    {
+        <h1>Create Task</h1>
+    }
+
+    <div class="list-table">
+        <Field Horizontal="true">
+            <FieldLabel ColumnSize="ColumnSize.Is2">Name</FieldLabel>
+            <FieldBody ColumnSize="ColumnSize.Is10">
+                <Validation Validator="@ValidateNameExists">
+                    <TextEdit @bind-Text="@taskModel.Task.Name">
+                        <Feedback>
+                            <ValidationNone>Name is required</ValidationNone>
+                        </Feedback>
+                    </TextEdit>
+                </Validation>
+            </FieldBody>
+        </Field>
+        <Field Horizontal="true">
+            <FieldLabel ColumnSize="ColumnSize.Is2">Description</FieldLabel>
+            <FieldBody ColumnSize="ColumnSize.Is10">
+                <TextEdit @bind-Text="@taskModel.Task.Description" />
+            </FieldBody>
+        </Field>
+        <Field Horizontal="true">
+            <FieldLabel ColumnSize="ColumnSize.Is2">Resource Assigned</FieldLabel>
+            <FieldBody ColumnSize="ColumnSize.IsAuto">
+                <Select TValue="Guid?" @bind-SelectedValue="@taskModel.Task.ResourceId">
+                    @if (taskModel.Task.ResourceId == null)
+                    {
+                        <SelectItem Value="@taskModel.Task.ResourceId">Select...</SelectItem>
+                    }
+                    @foreach (var resource in resources)
+                    {
+                        <SelectItem Value="resource.Id">@resource.Name</SelectItem>
+                    }
+                </Select>
+            </FieldBody>
+            <Button Color="Color.Primary" Clicked="OnClearResourceClick">Clear</Button>
+        </Field>
+        <Field Horizontal="true">
+            <FieldLabel ColumnSize="ColumnSize.Is2">Task Type</FieldLabel>
+            <FieldBody ColumnSize="ColumnSize.IsAuto">
+                <Select TValue="TaskType" @bind-SelectedValue="@taskModel.Task.TaskType">
+                    <SelectItem Value="@taskModel.Task.TaskType">@taskModel.Task.TaskType</SelectItem>
+                    @if (TaskType.Milestone != taskModel.Task.TaskType)
+                    {
+                        <SelectItem Value="TaskType.Milestone">@TaskType.Milestone</SelectItem>
+                    }
+                    @if (TaskType.Regular != taskModel.Task.TaskType)
+                    {
+                        <SelectItem Value="TaskType.Regular">@TaskType.Regular</SelectItem>
+                    }
+                    @if (TaskType.Summary != taskModel.Task.TaskType)
+                    {
+                        <SelectItem Value="TaskType.Summary">@TaskType.Summary</SelectItem>
+                    }
+                </Select>
+            </FieldBody>
+        </Field>
+        <Field Horizontal="true">
+            <FieldLabel ColumnSize="ColumnSize.Is2">Expected Start Date</FieldLabel>
+            <FieldBody ColumnSize="ColumnSize.IsAuto">
+                <DateEdit TValue="DateTime?" @bind-Date="@taskModel.Task.ExpectedStartDate" />
+            </FieldBody>
+        </Field>
+        <Field Horizontal="true">
+            <FieldLabel ColumnSize="ColumnSize.Is2">Expected End Date</FieldLabel>
+            <FieldBody ColumnSize="ColumnSize.IsAuto">
+                <DateEdit TValue="DateTime?" Date="@taskModel.Task.ExpectedEndDate" DateChanged="@OnExpectedEndDateChange" />
+            </FieldBody>
+        </Field>
+        <Field Horizontal="true">
+            <FieldLabel ColumnSize="ColumnSize.Is2">Expected Duration</FieldLabel>
+            <FieldBody ColumnSize="ColumnSize.IsAuto">
+                <TextEdit ReadOnly="true" @bind-Text="@taskModel.Task.ExpectedDuration" />
+            </FieldBody>
+        </Field>
+        <Field Horizontal="true">
+            <FieldLabel ColumnSize="ColumnSize.Is2">Expected Effort</FieldLabel>
+            <FieldBody ColumnSize="ColumnSize.IsAuto">
+                <NumericEdit @bind-Value="@taskModel.Task.ExpectedEffort" />
+            </FieldBody>
+        </Field>
+        <Field Horizontal="true">
+            <FieldLabel ColumnSize="ColumnSize.Is2">Actual Start Date</FieldLabel>
+            <FieldBody ColumnSize="ColumnSize.IsAuto">
+                <DateEdit TValue="DateTime?" @bind-Date="@taskModel.Task.ActualStartDate" />
+            </FieldBody>
+        </Field>
+        <Field Horizontal="true">
+            <FieldLabel ColumnSize="ColumnSize.Is2">Actual End Date</FieldLabel>
+            <FieldBody ColumnSize="ColumnSize.IsAuto">
+                <DateEdit TValue="DateTime?" Date="@taskModel.Task.ActualEndDate" DateChanged="@OnActualEndDateChange" />
+            </FieldBody>
+        </Field>
+        <Field Horizontal="true">
+            <FieldLabel ColumnSize="ColumnSize.Is2">Actual Duration</FieldLabel>
+            <FieldBody ColumnSize="ColumnSize.IsAuto">
+                <TextEdit ReadOnly="true" @bind-Value="@taskModel.Task.ActualDuration" />
+            </FieldBody>
+        </Field>
+        <Field Horizontal="true">
+            <FieldLabel ColumnSize="ColumnSize.Is2">Effort Completed</FieldLabel>
+            <FieldBody ColumnSize="ColumnSize.IsAuto">
+                <NumericEdit @bind-Value="@taskModel.Task.EffortCompleted" />
+            </FieldBody>
+        </Field>
+        <Field Horizontal="true">
+            <FieldLabel ColumnSize="ColumnSize.Is2">Actual Effort</FieldLabel>
+            <FieldBody ColumnSize="ColumnSize.IsAuto">
+                <NumericEdit @bind-Value="@taskModel.Task.ActualEffort" />
+            </FieldBody>
+        </Field>
+        <Field Horizontal="true">
+            <FieldLabel ColumnSize="ColumnSize.Is2">Percent Completed</FieldLabel>
+            <FieldBody ColumnSize="ColumnSize.IsAuto">
+                <TextEdit @bind-Text="@taskModel.Task.PercentCompleted" />
+            </FieldBody>
+        </Field>
+        <Field Horizontal="true">
+            <FieldLabel ColumnSize="ColumnSize.Is2">Parent Summary Task</FieldLabel>
+            <FieldBody ColumnSize="ColumnSize.Is3">
+                <Select TValue="Guid?" @bind-SelectedValue="@taskModel.Task.ParentSummaryTaskId">
+                    @if (taskModel.Task.ParentSummaryTaskId == null)
+                    {
+                        <SelectItem Value="@taskModel.Task.ParentSummaryTaskId">Select...</SelectItem>
+                    }
+                    @foreach (var task in tasks)
+                    {
+                        if (task.Id != taskModel.Task.ParentSummaryTaskId)
+                        {
+                            <SelectItem Value="task.Id">@task.Name</SelectItem>
+                        }
+                    }
+                </Select>
+            </FieldBody>
+            <Button Color="Color.Primary" Clicked="OnClearParentSummaryTaskClick">Clear</Button>
+        </Field>
+
+        <Field Horizontal="true">
+            <FieldLabel ColumnSize="ColumnSize.Is2">Predecessor Tasks</FieldLabel>
+            <FieldBody ColumnSize="ColumnSize.Is3">
+                <Select TValue="Guid" @bind-SelectedValue="@predecessorTaskId">
+                    @if (predecessorTaskId == Guid.Empty)
+                    {
+                        <SelectItem Value="@predecessorTaskId">Select...</SelectItem>
+                    }
+                    @foreach (var predecessor in predecessorTaskTempList)
+                    {
+                        <SelectItem Value="predecessor.Id">@predecessor.Name</SelectItem>
+                    }
+                </Select>
+            </FieldBody>
+            <Button Color="Color.Primary" Clicked="OnAddPredecessorTaskClick">Add</Button>
+        </Field>
+        <Field Horizontal="true">
+            <FieldLabel ColumnSize="ColumnSize.Is2"></FieldLabel>
+            <FieldBody ColumnSize="ColumnSize.Is3">
+                <Select Multiple="true" TValue="Guid" @bind-SelectedValue="@predecessorTaskId">
+                    @foreach (var task in taskModel.Task.TaskPredecessor)
+                    {
+                        //Need to get the name of the task so let's search for it by the predecessor task id in our tasks list
+                        var predecessorTaskData = tasks.Find(x => x.Id == task.PredecessorTaskId);
+                        <SelectItem Value="@task.PredecessorTaskId">@predecessorTaskData.Name</SelectItem>
+                    }
+                </Select>
+                <div style="padding-top:5px;">
+                    <Button Color="Color.Danger" Clicked="OnRemovePredecessorClick">Remove</Button>
+                </div>
+            </FieldBody>
+        </Field>
+
+        <Field Horizontal="true">
+            <FieldLabel ColumnSize="ColumnSize.Is2">Successor Tasks</FieldLabel>
+            <FieldBody ColumnSize="ColumnSize.Is3">
+                <Select TValue="Guid" @bind-SelectedValue="@successorTaskId">
+                    @if (successorTaskId == Guid.Empty)
+                    {
+                        <SelectItem Value="@successorTaskId">Select...</SelectItem>
+                    }
+                    @foreach (var successor in successorTaskTempList)
+                    {
+                        <SelectItem Value="successor.Id">@successor.Name</SelectItem>
+                    }
+                </Select>
+            </FieldBody>
+            <Button Color="Color.Primary" Clicked="OnAddSuccessorTaskClick">Add</Button>
+        </Field>
+        <Field Horizontal="true">
+            <FieldLabel ColumnSize="ColumnSize.Is2"></FieldLabel>
+            <FieldBody ColumnSize="ColumnSize.Is3">
+                <Select Multiple="true" TValue="Guid" @bind-SelectedValue="@successorTaskId">
+                    @foreach (var task in taskModel.Task.TaskSuccessor)
+                    {
+                        //Need to get the name of the task so let's search for it by the successor task id in our tasks list
+                        var successorTaskData = tasks.Find(x => x.Id == task.SuccessorTaskId);
+                        <SelectItem Value="@task.SuccessorTaskId">@successorTaskData.Name</SelectItem>
+                    }
+                </Select>
+                <div style="padding-top:5px;">
+                    <Button Color="Color.Danger" Clicked="OnRemoveSuccessorClick">Remove</Button>
+                </div>
+            </FieldBody>
+        </Field>
+
+        <Field Horizontal="true">
+            <FieldLabel ColumnSize="ColumnSize.Is2">Group Tasks</FieldLabel>
+            <FieldBody ColumnSize="ColumnSize.Is3">
+                <Select TValue="Guid" @bind-SelectedValue="@groupTaskId">
+                    @if (groupTaskId == Guid.Empty)
+                    {
+                        <SelectItem Value="@groupTaskId">Select...</SelectItem>
+                    }
+                    @foreach (var groupTask in taskGroupTempList)
+                    {
+                        <SelectItem Value="groupTask.Id">@groupTask.Name</SelectItem>
+                    }
+                </Select>
+            </FieldBody>
+            <Button Color="Color.Primary" Clicked="OnAddGroupTaskClick">Add</Button>
+        </Field>
+        <Field Horizontal="true">
+            <FieldLabel ColumnSize="ColumnSize.Is2"></FieldLabel>
+            <FieldBody ColumnSize="ColumnSize.Is3">
+                <Select Multiple="true" TValue="Guid" @bind-SelectedValue="@groupTaskId">
+                    @foreach (var taskGroup in taskModel.Task.TaskGroup)
+                    {
+                        //Need to get the name of the task so let's search for it by the associated task id in our tasks list
+                        var task = tasks.Find(x => x.Id == taskGroup.AssociatedTaskId);
+                        <SelectItem Value="@taskGroup.AssociatedTaskId">@task.Name</SelectItem>
+                    }
+                </Select>
+                <div style="padding-top:5px;">
+                    <Button Color="Color.Danger" Clicked="OnRemoveGroupTaskClick">Remove</Button>
+                </div>
+            </FieldBody>
+        </Field>
+
+        <Field Horizontal="true">
+            <FieldLabel ColumnSize="ColumnSize.Is2">Issues</FieldLabel>
+            <FieldBody ColumnSize="ColumnSize.Is3">
+                <Select TValue="Guid" @bind-SelectedValue="@issueId">
+                    @if (issueId == Guid.Empty)
+                    {
+                        <SelectItem Value="@issueId">Select...</SelectItem>
+                    }
+                    @foreach (var issue in issueTempList)
+                    {
+                        <SelectItem Value="issue.Id">@issue.Name</SelectItem>
+                    }
+                </Select>
+            </FieldBody>
+            <Button Color="Color.Primary" Clicked="OnAddIssueClick">Add</Button>
+        </Field>
+        <Field Horizontal="true">
+            <FieldLabel ColumnSize="ColumnSize.Is2"></FieldLabel>
+            <FieldBody ColumnSize="ColumnSize.Is3">
+                <Select Multiple="true" TValue="Guid" @bind-SelectedValue="@issueId">
+                    @foreach (var item in taskModel.Task.TaskIssue)
+                    {
+                        <SelectItem Value="@item.IssueId">@item.Issue.Name</SelectItem>
+                    }
+                </Select>
+                <div style="padding-top:5px;">
+                    <Button Color="Color.Danger" Clicked="OnRemoveIssueClick">Remove</Button>
+                </div>
+            </FieldBody>
+        </Field>
+    </div>
+    <div style="padding-top:1em; padding-bottom:2em;">
+        <Button class="back-button" Color="Color.Dark" @onclick="ClickBack">Back</Button>
+        @if (!success)
+        {
+            <Button class="save-button" Color="Color.Dark" @onclick="Save">Save</Button>
+        }
+        else
+        {
+            <Button class="save-button" Color="Color.Dark" @onclick="Save">Save Successful</Button>
+        }
+    </div>
+</div>
