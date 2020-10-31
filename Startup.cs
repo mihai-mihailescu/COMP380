@@ -11,8 +11,10 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using ProjectManagementSystem.Areas.Identity;
 using ProjectManagementSystem.Data;
-using ProjectManagementSystem.Data.Resources;
-using ProjectManagementSystem.Data.Tasks;
+using ProjectManagementSystem.Features.Issues;
+using ProjectManagementSystem.Features.Resources;
+using ProjectManagementSystem.Features.Tasks;
+
 
 namespace ProjectManagementSystem
 {
@@ -28,35 +30,33 @@ namespace ProjectManagementSystem
         // This method gets called by the runtime. Use this method to add services to the container.
         // For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
         public void ConfigureServices(IServiceCollection services)
-        {
+        {   
             services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseSqlServer(
                     Configuration.GetConnectionString("DefaultConnection")));
-            services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
-                .AddEntityFrameworkStores<ApplicationDbContext>();
-            
+                        
             services.AddRazorPages();
             services.AddServerSideBlazor();
 
             services.AddBlazorise(options =>
             {
-                options.ChangeTextOnKeyPress = true; // optional
+                options.ChangeTextOnKeyPress = false; // optional
             })
                 .AddBootstrapProviders()
                 .AddFontAwesomeIcons();
 
-            services.AddScoped<AuthenticationStateProvider, RevalidatingIdentityAuthenticationStateProvider<IdentityUser>>();
-            services.AddSingleton<ResourceService>();
-            services.AddSingleton<TaskService>();
+            services.AddTransient(typeof(ResourceService), typeof(ResourceService));
+            services.AddTransient(typeof(TaskService), typeof(TaskService));
+            services.AddTransient(typeof(IssueService), typeof(IssueService));
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             if (env.IsDevelopment())
-            {
+            {   
                 app.UseDeveloperExceptionPage();
-                app.UseDatabaseErrorPage();
+                app.UseDatabaseErrorPage();                
             }
             else
             {
