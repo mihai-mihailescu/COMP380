@@ -119,13 +119,22 @@
 
     private void Save()
     {
+        int entriesSaved = 0;
         // If the name is empty, we cannot save because it is required
         if (string.IsNullOrEmpty(taskModel.Task.Name))
         {
             return;
         }
-
-        var entriesSaved = TaskService.SaveTask(taskModel.Task);
+        else if (TaskId != null)
+        {
+            // Save edited changes
+            entriesSaved = db.SaveChanges();
+        }
+        else
+        {
+            // Save new changes
+            entriesSaved = TaskService.SaveTask(taskModel.Task);
+        }
 
         if (entriesSaved > 0)
         {
