@@ -1,0 +1,20 @@
+﻿@page "/resources/{ResourceId:guid}"
+@page "/resources/create"
+@inject ResourceService ResourceService
+
+
+@code {
+    [Parameter]
+    public Guid ResourceId { get; set; }
+
+    Resource resource = new Resource();
+
+    protected override async System.Threading.Tasks.Task OnInitializedAsync()
+    {
+        //If ResourceId is not empty, we know this is edit and we want to get the resource details
+        if (ResourceId != Guid.Empty)
+        {
+            resource = await ResourceService.GetResourceById(ResourceId);
+        }
+    }
+}

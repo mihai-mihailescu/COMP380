@@ -80,7 +80,7 @@ namespace ProjectManagementSystem.Features.Tasks
                 ParentSummaryTaskId = taskData.ParentSummaryTaskId,
                 TaskPredecessor = taskData.TaskPredecessor,
                 TaskSuccessor = taskData.TaskSuccessor,
-                TaskGroup = taskData.TaskGroup,
+                ParentGroupTaskId = taskData.ParentGroupTaskId,
                 DeliverableId = taskData.DeliverableId,
                 ResourceId = taskData.ResourceId,
                 TaskIssue = taskData.TaskIssue,

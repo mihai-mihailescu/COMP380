@@ -61,7 +61,6 @@
         {
             TaskPredecessor taskPredecessor = new TaskPredecessor();
             TaskSuccessor taskSuccessor = new TaskSuccessor();
-            TaskGroup taskGroup = new TaskGroup();
 
             // Let's make sure we don't add our own task to the list
             if (tasks[i].Id != taskModel.Task.Id)
@@ -87,18 +86,6 @@
                 {
                     successorTaskTempList.Add(tasks[i]);
                 }
-
-                // Check that the index is not larger than TaskGroup count otherwise we'll get an index exception
-                if (i < taskModel.Task.TaskGroup.Count)
-                {
-                    taskGroup = taskModel.Task.TaskGroup[i];
-                }
-
-                // Add all tasks to our group temp list that are not already saved in the db
-                if (tasks[i].Id != taskGroup.AssociatedTaskId)
-                {
-                    taskGroupTempList.Add(tasks[i]);
-                }
             }
         }
 
@@ -123,6 +110,11 @@
         if (string.IsNullOrEmpty(taskModel.Task.Name))
         {
             return;
+        }
+
+        if(TaskId != Guid.Empty)
+        {
+            this.db.SaveChangesAsync();
         }
 
         var entriesSaved = TaskService.SaveTask(taskModel.Task);
@@ -181,26 +173,7 @@
 
     }
 
-    private void OnAddGroupTaskClick()
-    {
-        // We do not want to add an empty guid
-        if (groupTaskId == null)
-        {
-            return;
-        }
 
-        // Get the groupTask from our temp list based off the selected groupTaskId
-        var groupTask = taskGroupTempList.Find(x => x.Id == groupTaskId);
-
-        // Add the group task data to our Task.TaskGroup list
-        taskModel.Task.TaskGroup.Add(new TaskGroup { TaskId = taskModel.Task.Id, AssociatedTaskId = groupTaskId });
-
-        // Remove the group task from our temp list because we don't want the user to add it again
-        taskGroupTempList.Remove(groupTask);
-
-        // Set the groupTaskId to empty so we display Select...
-        groupTaskId = Guid.Empty;
-    }
 
     private void OnRemoveGroupTaskClick()
     {
@@ -523,38 +496,7 @@
             </FieldBody>
         </Field>
 
-        <Field Horizontal="true">
-            <FieldLabel ColumnSize="ColumnSize.Is2">Group Tasks</FieldLabel>
-            <FieldBody ColumnSize="ColumnSize.Is3">
-                <Select TValue="Guid" @bind-SelectedValue="@groupTaskId">
-                    @if (groupTaskId == Guid.Empty)
-                    {
-                        <SelectItem Value="@groupTaskId">Select...</SelectItem>
-                    }
-                    @foreach (var groupTask in taskGroupTempList)
-                    {
-                        <SelectItem Value="groupTask.Id">@groupTask.Name</SelectItem>
-                    }
-                </Select>
-            </FieldBody>
-            <Button Color="Color.Primary" Clicked="OnAddGroupTaskClick">Add</Button>
-        </Field>
-        <Field Horizontal="true">
-            <FieldLabel ColumnSize="ColumnSize.Is2"></FieldLabel>
-            <FieldBody ColumnSize="ColumnSize.Is3">
-                <Select Multiple="true" TValue="Guid" @bind-SelectedValue="@groupTaskId">
-                    @foreach (var taskGroup in taskModel.Task.TaskGroup)
-                    {
-                        //Need to get the name of the task so let's search for it by the associated task id in our tasks list
-                        var task = tasks.Find(x => x.Id == taskGroup.AssociatedTaskId);
-                        <SelectItem Value="@taskGroup.AssociatedTaskId">@task.Name</SelectItem>
-                    }
-                </Select>
-                <div style="padding-top:5px;">
-                    <Button Color="Color.Danger" Clicked="OnRemoveGroupTaskClick">Remove</Button>
-                </div>
-            </FieldBody>
-        </Field>
+        
 
         <Field Horizontal="true">
             <FieldLabel ColumnSize="ColumnSize.Is2">Issues</FieldLabel>

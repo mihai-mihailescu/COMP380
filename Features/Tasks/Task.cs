@@ -25,12 +25,12 @@ namespace ProjectManagementSystem.Features.Tasks
         public int? ActualEffort { get; set; }
         public string PercentCompleted { get; set; }
         public Guid? ParentSummaryTaskId { get; set; }
+        public Guid? ParentGroupTaskId { get; set; }
         public Collection<TaskPredecessor> TaskPredecessor { get; set; } = new Collection<TaskPredecessor>();
-        public Collection<TaskSuccessor> TaskSuccessor { get; set; } = new Collection<TaskSuccessor>();
-        public Collection<TaskGroup> TaskGroup { get; set; } = new Collection<TaskGroup>();
+        public Collection<TaskSuccessor> TaskSuccessor { get; set; } = new Collection<TaskSuccessor>();                
+        public Collection<TaskIssue> TaskIssue { get; set; } = new Collection<TaskIssue>();
         public Guid? DeliverableId { get; set; }
         public Guid? ResourceId { get; set; }
-        public Collection<TaskIssue> TaskIssue { get; set; } = new Collection<TaskIssue>();
 
         public Task()
         {
@@ -58,9 +58,10 @@ namespace ProjectManagementSystem.Features.Tasks
             task.Property(x => x.EffortCompleted);
             task.Property(x => x.ActualEffort);
             task.Property(x => x.PercentCompleted);
-            task.Property(x => x.ParentSummaryTaskId);
+            task.Property(x => x.ParentSummaryTaskId);            
             task.HasOne<Deliverable>().WithOne().HasForeignKey<Task>(x => x.DeliverableId).HasConstraintName("FK_Deliverable");
             task.HasOne<Resource>().WithOne().HasForeignKey<Task>(x => x.ResourceId).HasConstraintName("FK_Resource");
+            task.Property(x => x.ParentGroupTaskId);
 
             task.OwnsMany(x => x.TaskPredecessor, tp =>
             {
@@ -77,14 +78,6 @@ namespace ProjectManagementSystem.Features.Tasks
                 ts.WithOwner().HasForeignKey(x => x.TaskId);
                 ts.Property(x => x.SuccessorTaskId);
             });
-
-            task.OwnsMany(x => x.TaskGroup, tg =>
-            {
-                tg.ToTable("TaskGroup");
-                tg.HasKey(x => x.Id);
-                tg.WithOwner().HasForeignKey(x => x.TaskId);
-                tg.Property(x => x.AssociatedTaskId);
-            });
         }
     }
 
@@ -100,14 +93,7 @@ namespace ProjectManagementSystem.Features.Tasks
         public Guid Id { get; set; }
         public Guid TaskId { get; set; }
         public Guid SuccessorTaskId { get; set; }        
-    }
-
-    public class TaskGroup
-    {        
-        public Guid Id { get; set; }
-        public Guid TaskId { get; set; }
-        public Guid AssociatedTaskId { get; set; }        
-    }
+    }    
 
     public enum TaskType
     {

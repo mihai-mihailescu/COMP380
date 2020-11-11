@@ -6,6 +6,7 @@ using ProjectManagementSystem.Features.Issues;
 using ProjectManagementSystem.Features.Requirements;
 using ProjectManagementSystem.Features.Resources;
 using ProjectManagementSystem.Features.Shared;
+using ProjectManagementSystem.Features.Skills;
 using ProjectManagementSystem.Features.Tasks;
 
 namespace ProjectManagementSystem.Data
@@ -24,6 +25,7 @@ namespace ProjectManagementSystem.Data
         public DbSet<Decision> Decision { get; set; }
         public DbSet<Deliverable> Deliverable { get; set; }
         public DbSet<Requirement> Requirement { get; set; }
+        public DbSet<Skill> Skill { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
