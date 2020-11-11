@@ -150,7 +150,14 @@
 
     private void OnRemovePredecessorClick()
     {
+        var predecessors = taskModel.Task.TaskPredecessor.ToList();
 
+        foreach (var predecessor in predecessors)
+        {
+            var addTask = tasks.Find(x => x.Id == predecessor.PredecessorTaskId);
+            predecessorTaskTempList.Add(addTask);
+            taskModel.Task.TaskPredecessor.Remove(predecessor);
+        }
     }
 
     private void OnAddSuccessorTaskClick()
@@ -174,14 +181,14 @@
 
     private void OnRemoveSuccessorClick()
     {
+        var successors = taskModel.Task.TaskSuccessor.ToList();
 
-    }
-
-
-
-    private void OnRemoveGroupTaskClick()
-    {
-
+        foreach (var successor in successors)
+        {
+            var addTask = tasks.Find(x => x.Id == successor.SuccessorTaskId);
+            successorTaskTempList.Add(addTask);
+            taskModel.Task.TaskSuccessor.Remove(successor);
+        }
     }
 
     private void OnAddIssueClick()
@@ -205,21 +212,15 @@
         issueId = Guid.Empty;
     }
 
-    private void OnRemoveIssueClick()
+    private void OnRemoveIssuesClick()
     {
-        if (issueId == Guid.Empty)
+        var taskIssues = taskModel.Task.TaskIssue.ToList();
+
+        foreach (var taskIssue in taskIssues)
         {
-            return;
+            issueTempList.Add(taskIssue.Issue);
+            taskModel.Task.TaskIssue.Remove(taskIssue);
         }
-
-        var issueToBeRemoved = taskModel.Task.TaskIssue.Single(x => x.IssueId == issueId);
-
-        if(issueToBeRemoved.IssueId == issueId)
-        {
-            taskModel.Task.TaskIssue.Remove(issueToBeRemoved);
-        }
-
-        issueTempList.Add(issueToBeRemoved.Issue);
     }
 
     private void OnExpectedEndDateChange(DateTime? endDate)
@@ -287,6 +288,11 @@
     {
         taskModel.Task.ParentSummaryTaskId = null;
     }
+
+    private void OnClearParentGroupTaskClick()
+    {
+        taskModel.Task.ParentGroupTaskId = null;
+    }
 }
 
 <div class="container-fluid">
@@ -299,240 +305,258 @@
         <h1>Create Task</h1>
     }
 
-    <div class="list-table">
-        <Field Horizontal="true">
-            <FieldLabel ColumnSize="ColumnSize.Is2">Name</FieldLabel>
-            <FieldBody ColumnSize="ColumnSize.Is10">
-                <Validation Validator="@ValidateNameExists">
-                    <TextEdit @bind-Text="@taskModel.Task.Name">
-                        <Feedback>
-                            <ValidationNone>Name is required</ValidationNone>
-                        </Feedback>
-                    </TextEdit>
-                </Validation>
-            </FieldBody>
-        </Field>
-        <Field Horizontal="true">
-            <FieldLabel ColumnSize="ColumnSize.Is2">Description</FieldLabel>
-            <FieldBody ColumnSize="ColumnSize.Is10">
-                <TextEdit @bind-Text="@taskModel.Task.Description" />
-            </FieldBody>
-        </Field>
-        <Field Horizontal="true">
-            <FieldLabel ColumnSize="ColumnSize.Is2">Resource Assigned</FieldLabel>
-            <FieldBody ColumnSize="ColumnSize.IsAuto">
-                <Select TValue="Guid?" @bind-SelectedValue="@taskModel.Task.ResourceId">
-                    @if (taskModel.Task.ResourceId == null)
+<div class="list-table">
+    <Field Horizontal="true">
+        <FieldLabel ColumnSize="ColumnSize.Is2">Name</FieldLabel>
+        <FieldBody ColumnSize="ColumnSize.Is10">
+            <Validation Validator="@ValidateNameExists">
+                <TextEdit @bind-Text="@taskModel.Task.Name">
+                    <Feedback>
+                        <ValidationNone>Name is required</ValidationNone>
+                    </Feedback>
+                </TextEdit>
+            </Validation>
+        </FieldBody>
+    </Field>
+    <Field Horizontal="true">
+        <FieldLabel ColumnSize="ColumnSize.Is2">Description</FieldLabel>
+        <FieldBody ColumnSize="ColumnSize.Is10">
+            <TextEdit @bind-Text="@taskModel.Task.Description" />
+        </FieldBody>
+    </Field>
+    <Field Horizontal="true">
+        <FieldLabel ColumnSize="ColumnSize.Is2">Resource Assigned</FieldLabel>
+        <FieldBody ColumnSize="ColumnSize.Is2">
+            <Select TValue="Guid?" @bind-SelectedValue="@taskModel.Task.ResourceId">
+                @if (taskModel.Task.ResourceId == null)
+                {
+                    <SelectItem Value="@taskModel.Task.ResourceId">Select...</SelectItem>
+                }
+                @foreach (var resource in resources)
+                {
+                    <SelectItem Value="resource.Id">@resource.Name</SelectItem>
+                }
+            </Select>
+        </FieldBody>
+        <Button Color="Color.Danger" Clicked="OnClearResourceClick">Remove</Button>
+    </Field>
+    <Field Horizontal="true">
+        <FieldLabel ColumnSize="ColumnSize.Is2">Task Type</FieldLabel>
+        <FieldBody ColumnSize="ColumnSize.IsAuto">
+            <Select TValue="TaskType" @bind-SelectedValue="@taskModel.Task.TaskType">
+                <SelectItem Value="@taskModel.Task.TaskType">@taskModel.Task.TaskType</SelectItem>
+                @if (TaskType.Milestone != taskModel.Task.TaskType)
+                {
+                    <SelectItem Value="TaskType.Milestone">@TaskType.Milestone</SelectItem>
+                }
+                @if (TaskType.Regular != taskModel.Task.TaskType)
+                {
+                    <SelectItem Value="TaskType.Regular">@TaskType.Regular</SelectItem>
+                }
+                @if (TaskType.Summary != taskModel.Task.TaskType)
+                {
+                    <SelectItem Value="TaskType.Summary">@TaskType.Summary</SelectItem>
+                }
+            </Select>
+        </FieldBody>
+    </Field>
+    <Field Horizontal="true">
+        <FieldLabel ColumnSize="ColumnSize.Is2">Expected Start Date</FieldLabel>
+        <FieldBody ColumnSize="ColumnSize.IsAuto">
+            <DateEdit TValue="DateTime?" @bind-Date="@taskModel.Task.ExpectedStartDate" />
+        </FieldBody>
+    </Field>
+    <Field Horizontal="true">
+        <FieldLabel ColumnSize="ColumnSize.Is2">Expected End Date</FieldLabel>
+        <FieldBody ColumnSize="ColumnSize.IsAuto">
+            <DateEdit TValue="DateTime?" Date="@taskModel.Task.ExpectedEndDate" DateChanged="@OnExpectedEndDateChange" />
+        </FieldBody>
+    </Field>
+    <Field Horizontal="true">
+        <FieldLabel ColumnSize="ColumnSize.Is2">Expected Duration</FieldLabel>
+        <FieldBody ColumnSize="ColumnSize.IsAuto">
+            <TextEdit ReadOnly="true" @bind-Text="@taskModel.Task.ExpectedDuration" />
+        </FieldBody>
+    </Field>
+    <Field Horizontal="true">
+        <FieldLabel ColumnSize="ColumnSize.Is2">Expected Effort</FieldLabel>
+        <FieldBody ColumnSize="ColumnSize.IsAuto">
+            <NumericEdit @bind-Value="@taskModel.Task.ExpectedEffort" />
+        </FieldBody>
+    </Field>
+    <Field Horizontal="true">
+        <FieldLabel ColumnSize="ColumnSize.Is2">Actual Start Date</FieldLabel>
+        <FieldBody ColumnSize="ColumnSize.IsAuto">
+            <DateEdit TValue="DateTime?" @bind-Date="@taskModel.Task.ActualStartDate" />
+        </FieldBody>
+    </Field>
+    <Field Horizontal="true">
+        <FieldLabel ColumnSize="ColumnSize.Is2">Actual End Date</FieldLabel>
+        <FieldBody ColumnSize="ColumnSize.IsAuto">
+            <DateEdit TValue="DateTime?" Date="@taskModel.Task.ActualEndDate" DateChanged="@OnActualEndDateChange" />
+        </FieldBody>
+    </Field>
+    <Field Horizontal="true">
+        <FieldLabel ColumnSize="ColumnSize.Is2">Actual Duration</FieldLabel>
+        <FieldBody ColumnSize="ColumnSize.IsAuto">
+            <TextEdit ReadOnly="true" @bind-Value="@taskModel.Task.ActualDuration" />
+        </FieldBody>
+    </Field>
+    <Field Horizontal="true">
+        <FieldLabel ColumnSize="ColumnSize.Is2">Effort Completed</FieldLabel>
+        <FieldBody ColumnSize="ColumnSize.IsAuto">
+            <NumericEdit @bind-Value="@taskModel.Task.EffortCompleted" />
+        </FieldBody>
+    </Field>
+    <Field Horizontal="true">
+        <FieldLabel ColumnSize="ColumnSize.Is2">Actual Effort</FieldLabel>
+        <FieldBody ColumnSize="ColumnSize.IsAuto">
+            <NumericEdit @bind-Value="@taskModel.Task.ActualEffort" />
+        </FieldBody>
+    </Field>
+    <Field Horizontal="true">
+        <FieldLabel ColumnSize="ColumnSize.Is2">Percent Completed</FieldLabel>
+        <FieldBody ColumnSize="ColumnSize.IsAuto">
+            <TextEdit @bind-Text="@taskModel.Task.PercentCompleted" />
+        </FieldBody>
+    </Field>
+    <Field Horizontal="true">
+        <FieldLabel ColumnSize="ColumnSize.Is2">Parent Summary Task</FieldLabel>
+        <FieldBody ColumnSize="ColumnSize.Is3">
+            <Select TValue="Guid?" @bind-SelectedValue="@taskModel.Task.ParentSummaryTaskId">
+                @if (taskModel.Task.ParentSummaryTaskId == null)
+                {
+                    <SelectItem Value="@taskModel.Task.ParentSummaryTaskId">Select...</SelectItem>
+                }
+                @foreach (var task in tasks)
+                {
+                    if (task.Id != this.TaskId)
                     {
-                        <SelectItem Value="@taskModel.Task.ResourceId">Select...</SelectItem>
+                        <SelectItem Value="task.Id">@task.Name</SelectItem>
                     }
-                    @foreach (var resource in resources)
-                    {
-                        <SelectItem Value="resource.Id">@resource.Name</SelectItem>
-                    }
-                </Select>
-            </FieldBody>
-            <Button Color="Color.Primary" Clicked="OnClearResourceClick">Clear</Button>
-        </Field>
-        <Field Horizontal="true">
-            <FieldLabel ColumnSize="ColumnSize.Is2">Task Type</FieldLabel>
-            <FieldBody ColumnSize="ColumnSize.IsAuto">
-                <Select TValue="TaskType" @bind-SelectedValue="@taskModel.Task.TaskType">
-                    <SelectItem Value="@taskModel.Task.TaskType">@taskModel.Task.TaskType</SelectItem>
-                    @if (TaskType.Milestone != taskModel.Task.TaskType)
-                    {
-                        <SelectItem Value="TaskType.Milestone">@TaskType.Milestone</SelectItem>
-                    }
-                    @if (TaskType.Regular != taskModel.Task.TaskType)
-                    {
-                        <SelectItem Value="TaskType.Regular">@TaskType.Regular</SelectItem>
-                    }
-                    @if (TaskType.Summary != taskModel.Task.TaskType)
-                    {
-                        <SelectItem Value="TaskType.Summary">@TaskType.Summary</SelectItem>
-                    }
-                </Select>
-            </FieldBody>
-        </Field>
-        <Field Horizontal="true">
-            <FieldLabel ColumnSize="ColumnSize.Is2">Expected Start Date</FieldLabel>
-            <FieldBody ColumnSize="ColumnSize.IsAuto">
-                <DateEdit TValue="DateTime?" @bind-Date="@taskModel.Task.ExpectedStartDate" />
-            </FieldBody>
-        </Field>
-        <Field Horizontal="true">
-            <FieldLabel ColumnSize="ColumnSize.Is2">Expected End Date</FieldLabel>
-            <FieldBody ColumnSize="ColumnSize.IsAuto">
-                <DateEdit TValue="DateTime?" Date="@taskModel.Task.ExpectedEndDate" DateChanged="@OnExpectedEndDateChange" />
-            </FieldBody>
-        </Field>
-        <Field Horizontal="true">
-            <FieldLabel ColumnSize="ColumnSize.Is2">Expected Duration</FieldLabel>
-            <FieldBody ColumnSize="ColumnSize.IsAuto">
-                <TextEdit ReadOnly="true" @bind-Text="@taskModel.Task.ExpectedDuration" />
-            </FieldBody>
-        </Field>
-        <Field Horizontal="true">
-            <FieldLabel ColumnSize="ColumnSize.Is2">Expected Effort</FieldLabel>
-            <FieldBody ColumnSize="ColumnSize.IsAuto">
-                <NumericEdit @bind-Value="@taskModel.Task.ExpectedEffort" />
-            </FieldBody>
-        </Field>
-        <Field Horizontal="true">
-            <FieldLabel ColumnSize="ColumnSize.Is2">Actual Start Date</FieldLabel>
-            <FieldBody ColumnSize="ColumnSize.IsAuto">
-                <DateEdit TValue="DateTime?" @bind-Date="@taskModel.Task.ActualStartDate" />
-            </FieldBody>
-        </Field>
-        <Field Horizontal="true">
-            <FieldLabel ColumnSize="ColumnSize.Is2">Actual End Date</FieldLabel>
-            <FieldBody ColumnSize="ColumnSize.IsAuto">
-                <DateEdit TValue="DateTime?" Date="@taskModel.Task.ActualEndDate" DateChanged="@OnActualEndDateChange" />
-            </FieldBody>
-        </Field>
-        <Field Horizontal="true">
-            <FieldLabel ColumnSize="ColumnSize.Is2">Actual Duration</FieldLabel>
-            <FieldBody ColumnSize="ColumnSize.IsAuto">
-                <TextEdit ReadOnly="true" @bind-Value="@taskModel.Task.ActualDuration" />
-            </FieldBody>
-        </Field>
-        <Field Horizontal="true">
-            <FieldLabel ColumnSize="ColumnSize.Is2">Effort Completed</FieldLabel>
-            <FieldBody ColumnSize="ColumnSize.IsAuto">
-                <NumericEdit @bind-Value="@taskModel.Task.EffortCompleted" />
-            </FieldBody>
-        </Field>
-        <Field Horizontal="true">
-            <FieldLabel ColumnSize="ColumnSize.Is2">Actual Effort</FieldLabel>
-            <FieldBody ColumnSize="ColumnSize.IsAuto">
-                <NumericEdit @bind-Value="@taskModel.Task.ActualEffort" />
-            </FieldBody>
-        </Field>
-        <Field Horizontal="true">
-            <FieldLabel ColumnSize="ColumnSize.Is2">Percent Completed</FieldLabel>
-            <FieldBody ColumnSize="ColumnSize.IsAuto">
-                <TextEdit @bind-Text="@taskModel.Task.PercentCompleted" />
-            </FieldBody>
-        </Field>
-        <Field Horizontal="true">
-            <FieldLabel ColumnSize="ColumnSize.Is2">Parent Summary Task</FieldLabel>
-            <FieldBody ColumnSize="ColumnSize.Is3">
-                <Select TValue="Guid?" @bind-SelectedValue="@taskModel.Task.ParentSummaryTaskId">
-                    @if (taskModel.Task.ParentSummaryTaskId == null)
-                    {
-                        <SelectItem Value="@taskModel.Task.ParentSummaryTaskId">Select...</SelectItem>
-                    }
-                    @foreach (var task in tasks)
-                    {
-                        if (task.Id != taskModel.Task.ParentSummaryTaskId)
-                        {
-                            <SelectItem Value="task.Id">@task.Name</SelectItem>
-                        }
-                    }
-                </Select>
-            </FieldBody>
-            <Button Color="Color.Primary" Clicked="OnClearParentSummaryTaskClick">Clear</Button>
-        </Field>
+                }
+            </Select>
+        </FieldBody>
+        <Button Color="Color.Danger" Clicked="OnClearParentSummaryTaskClick">Remove</Button>
+    </Field>
 
-        <Field Horizontal="true">
-            <FieldLabel ColumnSize="ColumnSize.Is2">Predecessor Tasks</FieldLabel>
-            <FieldBody ColumnSize="ColumnSize.Is3">
-                <Select TValue="Guid" @bind-SelectedValue="@predecessorTaskId">
-                    @if (predecessorTaskId == Guid.Empty)
+    <Field Horizontal="true">
+        <FieldLabel ColumnSize="ColumnSize.Is2">Parent Group Task</FieldLabel>
+        <FieldBody ColumnSize="ColumnSize.Is3">
+            <Select TValue="Guid?" @bind-SelectedValue="@taskModel.Task.ParentGroupTaskId">
+                @if (taskModel.Task.ParentGroupTaskId == null)
+                {
+                    <SelectItem Value="@taskModel.Task.ParentGroupTaskId">Select...</SelectItem>
+                }
+                @foreach (var task in tasks)
+                {
+                    if (task.Id != this.TaskId)
                     {
-                        <SelectItem Value="@predecessorTaskId">Select...</SelectItem>
+                        <SelectItem Value="task.Id">@task.Name</SelectItem>
                     }
-                    @foreach (var predecessor in predecessorTaskTempList)
-                    {
-                        <SelectItem Value="predecessor.Id">@predecessor.Name</SelectItem>
-                    }
-                </Select>
-            </FieldBody>
-            <Button Color="Color.Primary" Clicked="OnAddPredecessorTaskClick">Add</Button>
-        </Field>
-        <Field Horizontal="true">
-            <FieldLabel ColumnSize="ColumnSize.Is2"></FieldLabel>
-            <FieldBody ColumnSize="ColumnSize.Is3">
-                <Select Multiple="true" TValue="Guid" @bind-SelectedValue="@predecessorTaskId">
-                    @foreach (var task in taskModel.Task.TaskPredecessor)
-                    {
-                        //Need to get the name of the task so let's search for it by the predecessor task id in our tasks list
-                        var predecessorTaskData = tasks.Find(x => x.Id == task.PredecessorTaskId);
-                        <SelectItem Value="@task.PredecessorTaskId">@predecessorTaskData.Name</SelectItem>
-                    }
-                </Select>
-                <div style="padding-top:5px;">
-                    <Button Color="Color.Danger" Clicked="OnRemovePredecessorClick">Remove</Button>
-                </div>
-            </FieldBody>
-        </Field>
+                }
+            </Select>
+        </FieldBody>
+        <Button Color="Color.Danger" Clicked="OnClearParentGroupTaskClick">Remove</Button>
+    </Field>
 
-        <Field Horizontal="true">
-            <FieldLabel ColumnSize="ColumnSize.Is2">Successor Tasks</FieldLabel>
-            <FieldBody ColumnSize="ColumnSize.Is3">
-                <Select TValue="Guid" @bind-SelectedValue="@successorTaskId">
-                    @if (successorTaskId == Guid.Empty)
-                    {
-                        <SelectItem Value="@successorTaskId">Select...</SelectItem>
-                    }
-                    @foreach (var successor in successorTaskTempList)
-                    {
-                        <SelectItem Value="successor.Id">@successor.Name</SelectItem>
-                    }
-                </Select>
-            </FieldBody>
-            <Button Color="Color.Primary" Clicked="OnAddSuccessorTaskClick">Add</Button>
-        </Field>
-        <Field Horizontal="true">
-            <FieldLabel ColumnSize="ColumnSize.Is2"></FieldLabel>
-            <FieldBody ColumnSize="ColumnSize.Is3">
-                <Select Multiple="true" TValue="Guid" @bind-SelectedValue="@successorTaskId">
-                    @foreach (var task in taskModel.Task.TaskSuccessor)
-                    {
-                        //Need to get the name of the task so let's search for it by the successor task id in our tasks list
-                        var successorTaskData = tasks.Find(x => x.Id == task.SuccessorTaskId);
-                        <SelectItem Value="@task.SuccessorTaskId">@successorTaskData.Name</SelectItem>
-                    }
-                </Select>
-                <div style="padding-top:5px;">
-                    <Button Color="Color.Danger" Clicked="OnRemoveSuccessorClick">Remove</Button>
-                </div>
-            </FieldBody>
-        </Field>
+    <Field Horizontal="true">
+        <FieldLabel ColumnSize="ColumnSize.Is2">Predecessor Tasks</FieldLabel>
+        <FieldBody ColumnSize="ColumnSize.Is3">
+            <Select TValue="Guid" @bind-SelectedValue="@predecessorTaskId">
+                @if (predecessorTaskId == Guid.Empty)
+                {
+                    <SelectItem Value="@predecessorTaskId">Select...</SelectItem>
+                }
+                @foreach (var predecessor in predecessorTaskTempList)
+                {
+                    <SelectItem Value="predecessor.Id">@predecessor.Name</SelectItem>
+                }
+            </Select>
+        </FieldBody>
+        <Button Color="Color.Primary" Clicked="OnAddPredecessorTaskClick">Add</Button>
+    </Field>
+    <Field Horizontal="true">
+        <FieldLabel ColumnSize="ColumnSize.Is2"></FieldLabel>
+        <FieldBody ColumnSize="ColumnSize.Is3">
+            <Select Multiple="true" TValue="Guid" @bind-SelectedValue="@predecessorTaskId">
+                @foreach (var task in taskModel.Task.TaskPredecessor)
+                {
+                    //Need to get the name of the task so let's search for it by the predecessor task id in our tasks list
+                    var predecessorTaskData = tasks.Find(x => x.Id == task.PredecessorTaskId);
+                    <SelectItem Value="@task.PredecessorTaskId">@predecessorTaskData.Name</SelectItem>
+                }
+            </Select>
+        </FieldBody>
+        <div>
+            <Button Color="Color.Danger" Clicked="OnRemovePredecessorClick">Remove All</Button>
+        </div>
+    </Field>
 
-        
+    <Field Horizontal="true">
+        <FieldLabel ColumnSize="ColumnSize.Is2">Successor Tasks</FieldLabel>
+        <FieldBody ColumnSize="ColumnSize.Is3">
+            <Select TValue="Guid" @bind-SelectedValue="@successorTaskId">
+                @if (successorTaskId == Guid.Empty)
+                {
+                    <SelectItem Value="@successorTaskId">Select...</SelectItem>
+                }
+                @foreach (var successor in successorTaskTempList)
+                {
+                    <SelectItem Value="successor.Id">@successor.Name</SelectItem>
+                }
+            </Select>
+        </FieldBody>
+        <Button Color="Color.Primary" Clicked="OnAddSuccessorTaskClick">Add</Button>
+    </Field>
+    <Field Horizontal="true">
+        <FieldLabel ColumnSize="ColumnSize.Is2"></FieldLabel>
+        <FieldBody ColumnSize="ColumnSize.Is3">
+            <Select Multiple="true" TValue="Guid" @bind-SelectedValue="@successorTaskId">
+                @foreach (var task in taskModel.Task.TaskSuccessor)
+                {
+                    //Need to get the name of the task so let's search for it by the successor task id in our tasks list
+                    var successorTaskData = tasks.Find(x => x.Id == task.SuccessorTaskId);
+                    <SelectItem Value="@task.SuccessorTaskId">@successorTaskData.Name</SelectItem>
+                }
+            </Select>        
+        </FieldBody>
+        <div>
+            <Button Color="Color.Danger" Clicked="OnRemoveSuccessorClick">Remove All</Button>
+        </div>
+    </Field>
 
-        <Field Horizontal="true">
-            <FieldLabel ColumnSize="ColumnSize.Is2">Issues</FieldLabel>
-            <FieldBody ColumnSize="ColumnSize.Is3">
-                <Select TValue="Guid" @bind-SelectedValue="@issueId">
-                    @if (issueId == Guid.Empty)
-                    {
-                        <SelectItem Value="@issueId">Select...</SelectItem>
-                    }
-                    @foreach (var issue in issueTempList)
-                    {
-                        <SelectItem Value="issue.Id">@issue.Name</SelectItem>
-                    }
-                </Select>
-            </FieldBody>
-            <Button Color="Color.Primary" Clicked="OnAddIssueClick">Add</Button>
-        </Field>
-        <Field Horizontal="true">
-            <FieldLabel ColumnSize="ColumnSize.Is2"></FieldLabel>
-            <FieldBody ColumnSize="ColumnSize.Is3">
-                <Select Multiple="true" TValue="Guid" @bind-SelectedValue="@issueId">
-                    @foreach (var item in taskModel.Task.TaskIssue)
-                    {
-                        <SelectItem Value="@item.IssueId">@item.Issue.Name</SelectItem>
-                    }
-                </Select>
-                <div style="padding-top:5px;">
-                    <Button Color="Color.Danger" Clicked="OnRemoveIssueClick">Remove</Button>
-                </div>
-            </FieldBody>
-        </Field>
-    </div>
+    <Field Horizontal="true">
+        <FieldLabel ColumnSize="ColumnSize.Is2">Issues</FieldLabel>
+        <FieldBody ColumnSize="ColumnSize.Is3">
+            <Select TValue="Guid" @bind-SelectedValue="@issueId">
+                @if (issueId == Guid.Empty)
+                {
+                    <SelectItem Value="@issueId">Select...</SelectItem>
+                }
+                @foreach (var issue in issueTempList)
+                {
+                    <SelectItem Value="issue.Id">@issue.Name</SelectItem>
+                }
+            </Select>
+        </FieldBody>
+        <Button Color="Color.Primary" Clicked="OnAddIssueClick">Add</Button>
+    </Field>
+    <Field Horizontal="true">
+        <FieldLabel ColumnSize="ColumnSize.Is2"></FieldLabel>
+        <FieldBody ColumnSize="ColumnSize.Is3">
+            <Select Multiple="true" TValue="Guid" @bind-SelectedValue="@issueId">
+                @foreach (var item in taskModel.Task.TaskIssue)
+                {
+                    <SelectItem Value="@item.IssueId">@item.Issue.Name</SelectItem>
+                }
+            </Select>
+        </FieldBody>
+        <div>
+            <Button Color="Color.Danger" Clicked="OnRemoveIssuesClick">Remove All</Button>
+        </div>
+    </Field>
+</div>
     <div style="padding-top:1em; padding-bottom:2em;">
         <Button class="back-button" Color="Color.Dark" @onclick="ClickBack">Back</Button>
         @if (!success)

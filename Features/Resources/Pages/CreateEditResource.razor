@@ -17,4 +17,37 @@
             resource = await ResourceService.GetResourceById(ResourceId);
         }
     }
+
+    private void ValidateNameExists(ValidatorEventArgs n)
+    {
+        var name = Convert.ToString(n.Value);
+
+        n.Status = string.IsNullOrEmpty(name) ? ValidationStatus.None : ValidationStatus.Success;
+    }
 }
+
+<div class="container-fluid">
+    @if (ResourceId != Guid.Empty)
+    {
+        <h1>Edit Resource</h1>
+    }
+    else
+    {
+        <h1>Create Resource</h1>
+    }
+
+    <div class="list-table">
+        <Field Horizontal="true">
+            <FieldLabel ColumnSize="ColumnSize.Is2">Name</FieldLabel>
+            <FieldBody ColumnSize="ColumnSize.Is10">
+                <Validation Validator="@ValidateNameExists">
+                    <TextEdit @bind-Text="@resource.Name">
+                        <Feedback>
+                            <ValidationNone>Name is required</ValidationNone>
+                        </Feedback>
+                    </TextEdit>
+                </Validation>
+            </FieldBody>
+        </Field>
+    </div>
+</div>
