@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using ProjectManagementSystem.Features.Skills;
 using System;
 using System.Collections.ObjectModel;
 
@@ -12,7 +13,7 @@ namespace ProjectManagementSystem.Features.Resources
         public string Title { get; set; }               
         public decimal PayRate { get; set; }
         public Collection<AvailabilityCalendar> AvailabilityCalendar { get; set; }
-        public Collection<Skill> Skill { get; set; }
+        public Collection<ResourceSkill> ResourceSkill { get; set; } = new Collection<ResourceSkill>();
 
         public Resource()
         {
@@ -41,14 +42,14 @@ namespace ProjectManagementSystem.Features.Resources
                     ac.WithOwner().HasForeignKey(x => x.ResourceId);
                 });
 
-            resource.OwnsMany(x => x.Skill,
-                s =>
+            resource.OwnsMany(x => x.ResourceSkill,
+                rs =>
                 {
-                    s.ToTable("Skill");
-                    s.HasKey(x => x.Id);
-                    s.Property(x => x.Name);
-                    s.Property(x => x.SkillLevel);
-                    s.WithOwner().HasForeignKey(x => x.ResourceId);
+                    rs.ToTable("ResourceSkill");
+                    rs.HasKey(x => x.Id);                
+                    rs.WithOwner().HasForeignKey(x => x.ResourceId);
+                    rs.WithOwner().HasForeignKey(x => x.SkillId);
+                    rs.Property(x => x.SkillLevel).HasConversion<string>();
                 });
         }
     }
@@ -60,22 +61,29 @@ namespace ProjectManagementSystem.Features.Resources
         public DateTime From { get; set; }
         public DateTime To { get; set; }
 
-        private AvailabilityCalendar()
+        public AvailabilityCalendar()
         {
             Id = Guid.NewGuid();
         }
     }
 
-    public class Skill
+    public class ResourceSkill
     {
-        public Guid Id { get; private set; }
-        public string Name { get; set; }
-        public int SkillLevel { get; set; }
+        public Guid Id { get; private set; }        
         public Guid ResourceId { get; set; }
+        public Guid SkillId { get; set; }       
+        public SkillLevel SkillLevel { get; set; }
 
-        private Skill()
+        public ResourceSkill()
         {
             Id = Guid.NewGuid();
         }
+    }
+
+    public enum SkillLevel
+    {
+        Low,
+        Medium,
+        High
     }
 }

@@ -1,0 +1,71 @@
+﻿@page "/resources"
+@using Blazorise.DataGrid
+@using ProjectManagementSystem.Features.Resources
+@using ProjectManagementSystem.Data
+@using ProjectManagementSystem.Features.Resources.Models 
+@inject ResourceService ResourceService
+@inject ApplicationDbContext db
+@inject NavigationManager nav
+
+@code {
+    List<ResourceListModel> resourceListData = new List<ResourceListModel>();
+
+    protected override async System.Threading.Tasks.Task OnInitializedAsync()
+    {
+        resourceListData = await ResourceService.GetResourceListData();
+    }
+
+    private void OnCreateResourceClick()
+    {
+        nav.NavigateTo("/resources/create");
+    }
+
+    private void OnEditClick(Guid resourceId)
+    {
+        nav.NavigateTo("/resources/" + resourceId);
+    }
+
+    private async void OnDeleteClick(Guid resourceId)
+    {
+        var resourceDelete = await ResourceService.GetResourceById(resourceId);
+        db.Remove(resourceDelete);
+        var result = await db.SaveChangesAsync();
+        if (result > 0)
+        {
+            // Need to get our new data and refresh the component since we just deleted something from the Grid
+            resourceListData = resourceListData.FindAll(x => x.ResourceId != resourceId).ToList();
+            StateHasChanged();
+        }
+    }
+}
+
+@if (this.resourceListData == null)
+{
+    <h1>Loading...</h1>
+}
+else if (this.resourceListData.Count == 0)
+{
+    <h1>There are no tasks</h1>
+}
+else
+{
+    <div class="container-fluid">
+        <h1>Resources List</h1>
+        <div class="list-table">
+            <DataGrid TItem="ResourceListModel" Data="@resourceListData" Sortable="true" Filterable="true" ShowPager="true" PageSize="20" Striped="true" Borderless="true" Bordered="true" Editable="true">
+                <DataGridColumn TItem="ResourceListModel" Field="@nameof(ResourceListModel.ResourceName)" Caption="Name"></DataGridColumn>
+                <DataGridColumn TItem="ResourceListModel" Field="@nameof(ResourceListModel.ResourceTitle)" Caption="Title"></DataGridColumn>
+                <DataGridColumn TItem="ResourceListModel" Field="@nameof(ResourceListModel.TaskName)" Caption="Task"></DataGridColumn>
+                <DataGridCommandColumn TItem="ResourceListModel">
+                    <NewCommandTemplate Context="task"></NewCommandTemplate>
+                    <EditCommandTemplate Context="task"><Button Color="Color.Primary" Clicked="@(e=> OnEditClick(task.Item.ResourceId))">Edit</Button></EditCommandTemplate>
+                    <DeleteCommandTemplate Context="task"><Button Color="Color.Danger" Clicked="@(e=> OnDeleteClick(task.Item.ResourceId))">Delete</Button></DeleteCommandTemplate>
+                </DataGridCommandColumn>
+            </DataGrid>
+        </div>
+        <div style="padding-top:1em;">
+            <Button Clicked="@OnCreateResourceClick" Color="Color.Info">Create Resource</Button>
+        </div>
+    </div>
+}
+

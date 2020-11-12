@@ -1,6 +1,7 @@
 ﻿using ProjectManagementSystem.Features.Issues;
 using ProjectManagementSystem.Features.Resources;
 using ProjectManagementSystem.Features.Shared;
+using ProjectManagementSystem.Features.Skills;
 using ProjectManagementSystem.Features.Tasks;
 using System;
 using System.Linq;
@@ -13,7 +14,8 @@ namespace ProjectManagementSystem.Data
         {
             SeedResources(db);
             SeedTasks(db);
-            SeedIssues(db);            
+            SeedIssues(db);
+            SeedSkills(db);
         }
 
         private static void SeedResources(ApplicationDbContext db)
@@ -74,6 +76,38 @@ namespace ProjectManagementSystem.Data
                     new Issue(){Name = "Issue 4"}
                 };
                 db.Set<Issue>().AddRange(issuesToAdd);
+                db.SaveChanges();
+            }
+        }
+
+        private static void SeedSkills(ApplicationDbContext db)
+        {
+            var skill = db.Skill.Select(x => x.Id).ToList();
+
+            if(skill.Count == 0)
+            {
+                var skillsToAdd = new[]
+                {
+                    new Skill(){Name = "C#"},
+                    new Skill(){Name = "Java"},
+                    new Skill(){Name = "Html"},
+                    new Skill(){Name = "CSS"},
+                    new Skill(){Name = "Javascript"},
+                    new Skill(){Name = "Typescript"},
+                    new Skill(){Name = "Blazor"},
+                    new Skill(){Name = "SQL"},
+                    new Skill(){Name = "Integration Testing"},
+                    new Skill(){Name = "Unit Testing"},
+                    new Skill(){Name = "Manual Testing"},
+                    new Skill(){Name = "Automated UI Testing"},
+                    new Skill(){Name = "Marketing"},
+                    new Skill(){Name = "Project Management"},
+                    new Skill(){Name = "Documentation"},
+                    new Skill(){Name = "Sales"},
+                    new Skill(){Name = "Network Security"},
+                    new Skill(){Name = "API Development"}
+                };
+                db.Set<Skill>().AddRange(skillsToAdd);
                 db.SaveChanges();
             }
         }
