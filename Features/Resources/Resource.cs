@@ -13,7 +13,7 @@ namespace ProjectManagementSystem.Features.Resources
         public string Title { get; set; }               
         public decimal PayRate { get; set; }
         public Collection<AvailabilityCalendar> AvailabilityCalendar { get; set; }
-        public Collection<ResourceSkill> ResourceSkill { get; set; }
+        public Collection<ResourceSkill> ResourceSkill { get; set; } = new Collection<ResourceSkill>();
 
         public Resource()
         {
@@ -61,7 +61,7 @@ namespace ProjectManagementSystem.Features.Resources
         public DateTime From { get; set; }
         public DateTime To { get; set; }
 
-        private AvailabilityCalendar()
+        public AvailabilityCalendar()
         {
             Id = Guid.NewGuid();
         }
@@ -74,7 +74,7 @@ namespace ProjectManagementSystem.Features.Resources
         public Guid SkillId { get; set; }       
         public SkillLevel SkillLevel { get; set; }
 
-        private ResourceSkill()
+        public ResourceSkill()
         {
             Id = Guid.NewGuid();
         }
