@@ -8,6 +8,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using ProjectManagementSystem.Data;
+using ProjectManagementSystem.Features.Deliverables;
 using ProjectManagementSystem.Features.Issues;
 using ProjectManagementSystem.Features.Resources;
 using ProjectManagementSystem.Features.Skills;
@@ -46,6 +47,7 @@ namespace ProjectManagementSystem
             services.AddTransient(typeof(ResourceService), typeof(ResourceService));
             services.AddTransient(typeof(TaskService), typeof(TaskService));
             services.AddTransient(typeof(IssueService), typeof(IssueService));
+            services.AddTransient(typeof(DeliverableService), typeof(DeliverableService));
             services.AddTransient(typeof(SkillService), typeof(SkillService));
         }
 

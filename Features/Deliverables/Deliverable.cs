@@ -1,5 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using ProjectManagementSystem.Features.Tasks.Pages;
+using System.Collections.ObjectModel;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,7 +14,9 @@ namespace ProjectManagementSystem.Features.Deliverables
         public Guid Id { get; private set; }
         public string Name { get; set; }
         public string Description { get; set; }
-        public DateTime DueDate { get; set; }        
+        public DateTime DueDate { get; set; }
+
+        //public Collection<Tasks.Task> ListOfTasks { get; set; } = new Collection<Tasks.Task>();
 
         public Deliverable()
         {
@@ -30,6 +34,8 @@ namespace ProjectManagementSystem.Features.Deliverables
             deliverable.Property(x => x.Name);
             deliverable.Property(x => x.Description);
             deliverable.Property(x => x.DueDate);
+            //Requirements will have the FK for Deliverables
+            //Tasks will have the FK for Deliverables
         }
     }
 }

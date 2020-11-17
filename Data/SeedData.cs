@@ -1,4 +1,5 @@
-﻿using ProjectManagementSystem.Features.Issues;
+﻿using ProjectManagementSystem.Features.Deliverables;
+using ProjectManagementSystem.Features.Issues;
 using ProjectManagementSystem.Features.Resources;
 using ProjectManagementSystem.Features.Shared;
 using ProjectManagementSystem.Features.Skills;
@@ -16,6 +17,8 @@ namespace ProjectManagementSystem.Data
             SeedTasks(db);
             SeedIssues(db);
             SeedSkills(db);
+            SeedIssues(db);
+            SeedDeliverables(db);
         }
 
         private static void SeedResources(ApplicationDbContext db)
@@ -108,6 +111,21 @@ namespace ProjectManagementSystem.Data
                     new Skill(){Name = "API Development"}
                 };
                 db.Set<Skill>().AddRange(skillsToAdd);
+                db.SaveChanges();
+            }
+        }
+
+        private static void SeedDeliverables(ApplicationDbContext db)
+        {
+            var deliverable = db.Deliverable.Select(x => x.Id).ToList();
+
+            if (deliverable.Count == 0)
+            {
+                var deliverableToAdd = new[]
+                {
+                    new Deliverable(){Name = "Deliv 1" }
+                };
+                db.Set<Deliverable>().AddRange(deliverableToAdd);
                 db.SaveChanges();
             }
         }
