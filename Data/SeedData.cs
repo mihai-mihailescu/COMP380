@@ -15,10 +15,9 @@ namespace ProjectManagementSystem.Data
         {
             SeedResources(db);
             SeedTasks(db);
-            SeedIssues(db);
-            SeedSkills(db);
-            SeedIssues(db);
+            SeedIssues(db);                    
             SeedDeliverables(db);
+            SeedSkills(db);
         }
 
         private static void SeedResources(ApplicationDbContext db)
