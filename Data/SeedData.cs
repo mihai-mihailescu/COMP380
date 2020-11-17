@@ -1,4 +1,5 @@
-﻿using ProjectManagementSystem.Features.Issues;
+﻿using ProjectManagementSystem.Features.Deliverables;
+using ProjectManagementSystem.Features.Issues;
 using ProjectManagementSystem.Features.Resources;
 using ProjectManagementSystem.Features.Shared;
 using ProjectManagementSystem.Features.Tasks;
@@ -13,7 +14,8 @@ namespace ProjectManagementSystem.Data
         {
             SeedResources(db);
             SeedTasks(db);
-            SeedIssues(db);            
+            SeedIssues(db);
+            SeedDeliverables(db);
         }
 
         private static void SeedResources(ApplicationDbContext db)
@@ -74,6 +76,21 @@ namespace ProjectManagementSystem.Data
                     new Issue(){Name = "Issue 4"}
                 };
                 db.Set<Issue>().AddRange(issuesToAdd);
+                db.SaveChanges();
+            }
+        }
+
+        private static void SeedDeliverables(ApplicationDbContext db)
+        {
+            var deliverable = db.Deliverable.Select(x => x.Id).ToList();
+
+            if (deliverable.Count == 0)
+            {
+                var deliverableToAdd = new[]
+                {
+                    new Deliverable(){Name = "Deliv 1" }
+                };
+                db.Set<Deliverable>().AddRange(deliverableToAdd);
                 db.SaveChanges();
             }
         }
