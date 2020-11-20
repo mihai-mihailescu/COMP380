@@ -1,0 +1,262 @@
+@page "/issues/{IssueId:guid}"
+@page "/issues/create"
+@using ProjectManagementSystem.Features.Issues.Models
+@using ProjectManagementSystem.Features.ActionItems
+@using ProjectManagementSystem.Features.Decision
+@using ProjectManagementSystem.Features.Tasks
+@using ProjectManagementSystem.Features.Data
+@using ProjectManagementSystem.Features.Shared
+ 
+@inject IssueService IssueService
+@inject TaskService TaskService
+@inject NavigationManager navigation
+@inject ApplicationDbContext db
+
+@code{
+    [Parameter]
+    public Guid IssueId { get; set; } //The Id retrieved when Issue is clicked on
+
+    Issue issue = new Issue(); //Associated Issues
+    IssueModel issueModel = new IssueModel(); //retrieves issueModel to have list of Items, Action-Items, and Decisions
+    List<Issues.Issue> issues = new List<Issues.Issue>(); //Associated Issues
+    List<Issue> tempIssues = new List<Issue>(); //Unassociated Issues
+    List<ActionItems.ActionItem> actionItems = new List<ActionItems.ActionItem>();
+
+    Guid issueId;
+    Guid actionItemId; 
+    Guid decisionId;
+
+    bool success;
+    private string removeAllText = "<<";
+
+    protected override async System.Threading.Tasks.Task OnInitializedAsync()
+    {
+        if (issueId != Guid.Empty)
+        {
+            issueModel = await IssueService.GetIssueById(IssueId);
+        }
+        tempIssues = await IssueService.GetIssuesDataAsync();
+        CreateTempIssueLists();
+    }
+
+    private void ValidateNameExists(ValidatorEventArgs n)
+    {
+        var name = Convert.ToString(n.Value);
+
+        n.Status = string.IsNullOrEmpty(name) ? ValidationStatus.None : ValidationStatus.Success;
+    }
+
+    private void CreateTempIssueLists()
+    {
+        for (var i = 0; i < issues.Count; i++)
+        {
+            TaskIssue associatedIssue = new TaskIssue();
+            if (i < issueModel.Issue.TaskIssue.Count)
+            {
+                associatedIssue = issueModel.Issue.TaskIssue[i];
+            }
+
+            if (issues[i].Id != associatedIssue?.IssueId)
+            {
+                tempIssues.Add(issues[i]);
+            }
+        }
+    }
+
+    private void Save()
+    {
+        int entriesSaved = 0;
+
+        // If the name is empty, we cannot save because it is required
+        if (string.IsNullOrEmpty(issueModel.Issue.Name))
+        {
+            return;
+        }
+        else if (IssueId != Guid.Empty)
+        {
+            // Save edited changes
+            entriesSaved = db.SaveChanges();
+        }
+        else
+        {
+            // Save new changes
+            entriesSaved = IssueService.SaveIssue(issueModel.Issue);
+        }
+
+        if (entriesSaved > 0)
+        {
+            success = true;
+        }
+    }
+
+    private void OnAddIssueClick()
+    {
+        // We do not want to add an empty guid
+        if (issueId == Guid.Empty)
+        {
+            var selectedIssue = tempIssues.Find(x => x.Id == issueId);
+            issues.Add(selectedIssue);
+
+            //Remove issue from temp list
+            tempIssues.Remove(selectedIssue);
+        }
+    }
+
+    private void OnAddIssueClick(Guid issueId)
+    {
+        if (issueId != Guid.Empty)
+        {
+            var selectedIssue = tempIssues.Find(x => x.Id == issueId);
+            issues.Add(selectedIssue);
+
+            //remove issue from temp list
+            tempIssues.Remove(selectedIssue);
+        }
+    }
+
+    private void OnRemoveIssueClick()
+    {
+        var taskIssues = issueModel.Issue.TaskIssue.ToList();
+
+
+    }
+
+    private void ClickBack()
+    {
+        navigation.NavigateTo("/issues");
+    }
+
+    private void OnExpectedCompletionDateChange(DateTime? expectedDate) {
+        //update on expected completion date change
+    }
+
+    private void OnActualCompletionDateChange(DateTime? actualDate) {
+        //update on actual completion date
+        
+    }
+    private void OnClearActionItemClick()
+    {
+        issueModel.Issue.ActionItemId = null;
+    }
+
+    private void OnClearDecisionClick() {
+        issueModel.Issue.DecisionId = null;
+    }
+
+    private void OnClearIssueClick() {
+        issueModel.Issue.IssueId = null;
+    }
+
+
+}
+
+<div class="container-fluid">
+    @if (IssueId != Guid.Empty)
+    {
+        <h1>Edit Resource</h1>
+    }
+    else
+    {
+        <h1>Create Resource</h1>
+    }
+
+    <div class="list-table">
+        <Field Horizontal="true">
+            <FieldLabel ColumnSize="ColumnSize.Is2">Name</FieldLabel>
+            <FieldBody ColumnSize="ColumnSize.Is2">
+                <Validation Validator="@ValidateNameExists">
+                    <TextEdit @bind-Text="@issue.Name">
+                        <Feedback>
+                            <ValidationNone>Name is required</ValidationNone>
+                        </Feedback>
+                    </TextEdit>
+                </Validation>
+            </FieldBody>
+        </Field>
+        <Field Horizontal="true">
+            <FieldLabel ColumnSize="ColumnSize.Is2">Description</FieldLabel>
+            <FieldBody ColumnSize="ColumnSize.IsAuto">
+                <NumericEdit @bind-Value="@issue.Description" />
+            </FieldBody>
+        </Field>
+        <Field Horizontal="true">
+            <FieldLabel ColumnSize="ColumnSize.Is2">Issues</FieldLabel>
+            <FieldBody ColumnSize="ColumnSize.Is2">
+                <Select TValue="Guid" @bind-SelectedValue="@issueId">
+                    @if (issueId == Guid.Empty)
+                    {
+                        <SelectItem Value="@issueId">Select Skill...</SelectItem>
+                    }
+                    @foreach (var issue in tempIssues)
+                    {
+                        <SelectItem Value="issue.Id">@issue.Name</SelectItem>
+                    }
+                </Select>
+            </FieldBody>
+            <Button Color="Color.Primary" Clicked="OnAddIssueClick">Add</Button>
+        </Field>
+        <Field Horizontal="true">
+            <FieldLabel ColumnSize="ColumnSize.Is2">Issues</FieldLabel>
+            <FieldBody ColumnSize="ColumnSize.Is3">
+                <Select multiple="true" TValue="Guid" @bind-SelectedValue="@issueId">
+                    @foreach (var issue in tempIssues)
+                    {
+                        <SelectItem Value="issue.Id">@issue.Name</SelectItem>
+                    }
+                </Select>
+                <div style="padding-top:5px;">
+                    <Button Color="Color.Primary" Clicked="OnAddIssueClick">Add</Button>
+                </div>
+            </FieldBody>
+        </Field>
+        <Field Horizontal="true">
+            <FieldLabel ColumnSize="ColumnSize.Is2">Task Associations</FieldLabel>
+            <FieldBody ColumnSize="ColumnSize.Is3">
+                <Select Multiple="true" TValue="Guid" @bind-SelectedValue="@issueId">
+                    @foreach (var issue in issues)
+                    {
+                        issueId = issue.Id;
+                        <SelectItem Value="issue.Id">@issue.Name</SelectItem>
+                    }
+                </Select>
+                <div style="padding-top:5px;">
+                    <Button Color="Color.Danger" Clicked="OnRemoveIssueClick">Remove</Button>
+                </div>
+            </FieldBody>
+        </Field>
+        <Field Horizontal="true">
+                <FieldLabel ColumnSize="ColumnSize.Is2">Unassociated Issues</FieldLabel>
+                <FieldBody ColumnSize="ColumnSize.Is3">
+                    <div class="multiple-selector">
+                        <ul class="selectable-ul">
+                            @foreach (var issue in tempIssues)
+                            {
+                                <li @onclick="@(OnAddIssueClick)">@issue.Name</li>
+                            }
+                        </ul>
+                        <div class="multiple-selector-buttons">
+                            <button type="button" @onclick="SelectAll"></button>
+                            <button type="button" @onclick="DeselectAll">@removeAllText</button>
+                        </div>
+                        <ul class="selectable-ul">
+                            @foreach (var issue in issues)
+                            {
+                                <li @onclick="@OnRemoveIssueClick">@issue.Name</li>
+                            }
+                        </ul>
+                    </div>
+                </FieldBody>
+            </Field>
+    </div>
+    <div style="padding-top:1em; padding-bottom:2em;">
+        <Button class="back-button" Color="Color.Dark" @onclick="ClickBack">Back</Button>
+        @if (!success)
+        {
+            <Button class="save-button" Color="Color.Dark" @onclick="Save">Save</Button>
+        }
+        else
+        {
+            <Button class="save-button" Color="Color.Dark" @onclick="Save">Save Successful</Button>
+        }
+    </div>
+</div>
