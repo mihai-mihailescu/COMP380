@@ -13,7 +13,7 @@ namespace ProjectManagementSystem.Features.Issues
         public string Description { get; set; }
         public Priority Priority { get; set; }
         public Severity Severity { get; set; }
-        public DateTime DateRaised { get; private set; }
+        public DateTime DateRaised { get; set; }
         public DateTime? DateAssigned { get; set; }
         public DateTime? ExpectedCompletionDate { get; set; }
         public DateTime? ActualCompletionDate { get; set; }
