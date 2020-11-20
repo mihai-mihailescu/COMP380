@@ -1,7 +1,11 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Data.SqlClient;
+using Microsoft.EntityFrameworkCore;
 using ProjectManagementSystem.Data;
+using ProjectManagementSystem.Features.Deliverables.Models;
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Threading.Tasks;
 
 namespace ProjectManagementSystem.Features.Issues
@@ -58,7 +62,7 @@ namespace ProjectManagementSystem.Features.Issues
                 DateRaised = issueData.DateRaised,
                 DateAssigned = issueData.DateAssigned,
                 ExpectedCompletionDate = issueData.ExpectedCompletionDate,
-                ActualCompltionDate = issueData.ActualCompletionDate,
+                ActualCompletionDate = issueData.ActualCompletionDate,
                 Status = issueData.Status,
                 StatusDescription = issueData.StatusDescription,
                 UpdateDate = issueData.UpdateDate
@@ -66,9 +70,9 @@ namespace ProjectManagementSystem.Features.Issues
             try
             {
                 this.db.Add(issue);
-                entriesSaved = this.db.SaveChanges()
+                entriesSaved = this.db.SaveChanges();
             }
-            catch(SQL exception){
+            catch(SqlException ex){
                 Console.Write(ex.Message);
             }
             return entriesSaved;
