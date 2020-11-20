@@ -45,5 +45,33 @@ namespace ProjectManagementSystem.Features.Issues
 
             return issueModel;
         }
+        
+        public int SaveIssue(Issue issueData){
+            int entriesSaved = 0;
+            
+            var issue = new Issue()
+            {
+                Name = issueData.Name,
+                Description = issueData.Description,
+                Priority = issueData.Priority,
+                Severity = issueData.Severity,
+                DateRaised = issueData.DateRaised,
+                DateAssigned = issueData.DateAssigned,
+                ExpectedCompletionDate = issueData.ExpectedCompletionDate,
+                ActualCompltionDate = issueData.ActualCompletionDate,
+                Status = issueData.Status,
+                StatusDescription = issueData.StatusDescription,
+                UpdateDate = issueData.UpdateDate
+            };
+            try
+            {
+                this.db.Add(issue);
+                entriesSaved = this.db.SaveChanges()
+            }
+            catch(SQL exception){
+                Console.Write(ex.Message);
+            }
+            return entriesSaved;
+        }
     }
 }
