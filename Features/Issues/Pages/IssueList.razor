@@ -1,0 +1,71 @@
+@page "/issues"
+@using Blazorise.DataGrid
+@using ProjectManagementSystem.Features.Issues.Models
+@using ProjectManagementSystem.Data
+@inject IssueService IssueService
+@inject NavigationManager nav
+@inject ApplicationDbContext db
+
+@code {
+    List<IssueListModel> issueListModelData = new List<IssueListModel>();
+    List<IssueListModel> taskListModelData = new List<IssueListModel>();
+
+    protected override async System.Threading.Tasks.Task OnInitializedAsync() {
+        issueListModelData = await IssueService.GetIssuesListDataAsync();
+    }
+
+    private void OnEditClick(Guid issueId) {
+        nav.NavigateTo("/issues/" + issueId);
+    }
+
+    private async void OnDeleteClick(Guid issueId)
+    {
+        var issueDelete = await IssueService.GetIssueById(issueId);
+        db.Remove(issueDelete.Issue);
+        var result = await db.SaveChangesAsync();
+        if (result > 0)
+        {
+            //Need to get new data while refreshing component after removing item from Grid
+            issueListModelData = issueListModelData.FindAll(x => x.Id != issueId).ToList();
+            StateHasChanged(); //updates Blazorise page
+        }
+    }
+
+    private void OnCreateIssueClick()
+    {
+        nav.NavigateTo("/issues/create");
+    }
+}
+
+@if (this.issueListModelData == null)
+{
+    <p><em>Loading...</em></p>
+}
+else if (this.issueListModelData.Count == 0)
+{
+    <h1>There are no tasks</h1>
+}
+else
+{
+    <div class="container-fluid">
+        <h1>Issues List</h1>
+        <div class="list-table">
+            <DataGrid TItem="IssueListModel" Data="@issueListModelData" Sortable="true" Filterable="true" ShowPager="true" PageSize="20" Striped="true" Borderless="true" Bordered="true" Editable="true">
+                <DataGridColumn TItem="IssueListModel" Field="@nameof(IssueListModel.Name)" Caption="Name"></DataGridColumn>
+                <DataGridColumn TItem="IssueListModel" Field="@nameof(IssueListModel.ActionItemName)" Caption="Associated Action Item"></DataGridColumn>
+                <DataGridColumn TItem="IssueListModel" Field="@nameof(IssueListModel.DecisionName)" Caption="Associated Decision"></DataGridColumn>
+                <DataGridColumn TItem="IssueListModel" Field="@nameof(IssueListModel.ExpectedCompletionDate)" Caption="Expected Completion Date"></DataGridColumn>
+                <DataGridColumn TItem="IssueListModel" Field="@nameof(IssueListModel.ActualCompletionDate)" Caption="Actual Completion Date"></DataGridColumn>
+                <DataGridColumn TItem="IssueListModel" Field="@nameof(IssueListModel.UpdateDate)" Caption="Update Date"></DataGridColumn>
+                <DataGridCommandColumn TItem="IssueListModel">
+                    <NewCommandTemplate Context="issue"></NewCommandTemplate>
+                    <EditCommandTemplate Context="issue"><Button Color="Color.Primary" Clicked="@(e=> OnEditClick(issue.Item.Id))">Edit</Button></EditCommandTemplate>
+                    <DeleteCommandTemplate Context="issue"><Button Color="Color.Danger" Clicked="@(e=> OnDeleteClick(issue.Item.Id))">Delete</Button></DeleteCommandTemplate>
+                </DataGridCommandColumn>
+            </DataGrid>
+        </div>
+        <div style="padding-top:1em;">
+            <Button Clicked="@OnCreateIssueClick" Color="Color.Info">Create Issue</Button>
+        </div>
+    </div>
+}
