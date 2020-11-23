@@ -14,7 +14,7 @@ namespace ProjectManagementSystem.Features.Skills
         {
             this.db = db;
         }
-        public async Task<List<Skill>> GetSkills()
+        public async Task<List<Skill>> GetSkillsAsync()
         {
             var skills = await (from skill in this.db.Skill
                                    select skill).ToListAsync();

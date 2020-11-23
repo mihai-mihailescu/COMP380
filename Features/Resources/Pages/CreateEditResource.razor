@@ -1,8 +1,13 @@
 ﻿@page "/resources/{ResourceId:guid}"
 @page "/resources/create"
+@using ProjectManagementSystem.Features.Resources
 @using ProjectManagementSystem.Features.Skills
+@using ProjectManagementSystem.Data
+@using ProjectManagementSystem.Features.Shared
 @inject ResourceService ResourceService
 @inject SkillService SkillService
+@inject ApplicationDbContext db
+@inject NavigationManager navigation
 
 @code {
     [Parameter]
@@ -11,7 +16,15 @@
     Resource resource = new Resource();
     List<Skill> skills = new List<Skill>();
     List<Skill> skillTempList = new List<Skill>();
+    List<ResourceSkill> resourceSkills = new List<ResourceSkill>();
     Guid skillId;
+    Guid resourceSkillId;
+    Guid availabilityId;
+    DateTime? From;
+    DateTime? To;
+    string skillLevel;
+    bool success;
+
 
     protected override async System.Threading.Tasks.Task OnInitializedAsync()
     {
@@ -19,37 +32,31 @@
         if (ResourceId != Guid.Empty)
         {
             resource = await ResourceService.GetResourceById(ResourceId);
-            skills = await SkillService.GetSkills();
+            resourceSkills = await ResourceService.GetResourceSkillsByResourceId(ResourceId);
         }
+        skills = await SkillService.GetSkillsAsync();
+
         CreateTempSkillList();
+
     }
 
     private void CreateTempSkillList()
     {
-        // Get our current resource skills associated to the resource
-        var resourceSkillList = resource.ResourceSkill.ToList();
+        // Assign our skills list to a temp list
+        skillTempList.AddRange(skills);
 
-        // Iterate through every skill and only add skills to our temp list that is not in our current resource skill list
-        for (var i = 0; i < skills.Count; i++)
+        // Remove any current skills from our temp list
+        foreach (var skill in resourceSkills)
         {
-            var resourceSkill = new ResourceSkill();
-
-            if (i < resourceSkillList.Count)
-            {
-                resourceSkill = resourceSkillList[i];
-            }
-
-            if (skills[i].Id != resourceSkill?.SkillId)
-            {
-                skillTempList.Add(skills[i]);
-            }
+            var skillToBeRemoved = skills.Find(x => x.Id == skill.SkillId);
+            skillTempList.Remove(skillToBeRemoved);
         }
     }
 
     private void OnAddSkillClick()
     {
         // We do not want to add an empty guid
-        if (skillId == Guid.Empty)
+        if (skillId == Guid.Empty || string.IsNullOrEmpty(skillLevel))
         {
             return;
         }
@@ -57,33 +64,100 @@
         // Get the skill from our temp list based off the selected skillId
         var skill = skillTempList.Find(x => x.Id == skillId);
 
+        // Parse our skill level stored as a string into an enum
+        Enum.TryParse(skillLevel, out SkillLevel enumSkillLevel);
+
         // Add the ResourceSkill data to our resource.ResourceSkill list
-        resource.ResourceSkill.Add(new ResourceSkill { ResourceId = resource.Id, SkillId = skill.Id });
+        resourceSkills.Add(new ResourceSkill { ResourceId = ResourceId.ToString(), SkillId = skill.Id, SkillLevel = enumSkillLevel });
 
         // Remove the skill from our temp list because we don't want the user to add it again
         skillTempList.Remove(skill);
 
         // Set the skillId to empty so we display Select...
         skillId = Guid.Empty;
+
+        // Set our skill level stored as string back to an empty string so we display Select...
+        skillLevel = string.Empty;
     }
 
     private void OnRemoveSkillClick()
     {
-        var resourceSkills = resource.ResourceSkill.ToList();
-
+        // For each resource skill, add it back to the temp list and remove it from the resource
         foreach (var resourceSkill in resourceSkills)
         {
             var skillToAdd = skills.Find(x => x.Id == resourceSkill.SkillId);
             skillTempList.Add(skillToAdd);
-            resource.ResourceSkill.Remove(resourceSkill);
         }
+
+        resourceSkills.RemoveRange(0, resourceSkills.Count);
     }
 
+    private void OnAddAvailabilityClick()
+    {
+        // We do not want to add an empty date
+        if (this.From == null || this.To == null)
+        {
+            return;
+        }
+        // Add new availability dates to the calendar
+        resource.AvailabilityCalendar.Add(new AvailabilityCalendar { From = (DateTime)this.From, To = (DateTime)this.To, ResourceId = resource.Id });
+
+        // Set the dates back to null so it displays mm/dd/yyyy format
+        this.From = null;
+        this.To = null;
+    }
+
+    private void OnRemoveAvailabilityClick()
+    {
+        resource.AvailabilityCalendar.Clear();
+    }
+
+    // Name is required so this will perform validation if the resource is saved without a name
     private void ValidateNameExists(ValidatorEventArgs n)
     {
         var name = Convert.ToString(n.Value);
 
         n.Status = string.IsNullOrEmpty(name) ? ValidationStatus.None : ValidationStatus.Success;
+    }
+
+    private void Save()
+    {
+        int entriesSaved = 0;
+        // If the name is empty, we cannot save because it is required
+        if (string.IsNullOrEmpty(resource.Name))
+        {
+            return;
+        }
+        else if (ResourceId != Guid.Empty)
+        {
+            // This is not the ideal way to do this.  I was having problems when resourceSkill was a navigation property of resource so I pulled it out and now we have to do this
+            foreach (var resourceSkill in resourceSkills)
+            {
+                var rs = this.db.ResourceSkill.Find(resourceSkill.Id);
+                if (rs == null)
+                {
+                    this.db.ResourceSkill.Add(resourceSkill);
+                }
+            }
+
+            // Save edited changes
+            entriesSaved = db.SaveChanges();
+        }
+        else
+        {
+            // Save new changes
+            entriesSaved = ResourceService.SaveResource(resource, resourceSkills);
+        }
+
+        if (entriesSaved > 0)
+        {
+            success = true;
+        }
+    }
+
+    private void ClickBack()
+    {
+        navigation.NavigateTo("/resources");
     }
 }
 
@@ -97,80 +171,111 @@
         <h1>Create Resource</h1>
     }
 
-<div class="list-table">
-    <Field Horizontal="true">
-        <FieldLabel ColumnSize="ColumnSize.Is2">Name</FieldLabel>
-        <FieldBody ColumnSize="ColumnSize.Is2">
-            <Validation Validator="@ValidateNameExists">
-                <TextEdit @bind-Text="@resource.Name">
-                    <Feedback>
-                        <ValidationNone>Name is required</ValidationNone>
-                    </Feedback>
-                </TextEdit>
-            </Validation>
-        </FieldBody>
-    </Field>
-    <Field Horizontal="true">
-        <FieldLabel ColumnSize="ColumnSize.Is2">Title</FieldLabel>
-        <FieldBody ColumnSize="ColumnSize.Is2">
-            <TextEdit @bind-Text="@resource.Title" />
-        </FieldBody>
-    </Field>
-    <Field Horizontal="true">
-        <FieldLabel ColumnSize="ColumnSize.Is2">Pay Rate</FieldLabel>
-        <FieldBody ColumnSize="ColumnSize.IsAuto">
-            <NumericEdit @bind-Value="@resource.PayRate" />
-        </FieldBody>
-    </Field>
-    <Field Horizontal="true">
-        <FieldLabel ColumnSize="ColumnSize.Is2">Skill and Level</FieldLabel>
-        <FieldBody ColumnSize="ColumnSize.Is2">
-            <Select TValue="Guid" @bind-SelectedValue="@skillId">
-                @if (skillId == Guid.Empty)
-                {
-                    <SelectItem Value="@skillId">Select Skill...</SelectItem>
-                }
-                @foreach (var skill in skillTempList)
-                {
-                    <SelectItem Value="skill.Id">@skill.Name</SelectItem>
-                }
-            </Select>
-        </FieldBody>
-        <FieldBody ColumnSize="ColumnSize.Is2">
-            <Select TValue="Guid" @bind-SelectedValue="@skillId">
-                @if (skillId == Guid.Empty)
-                {
-                    <SelectItem Value="@skillId">Select Skill Level...</SelectItem>
-                }               
-                    <SelectItem Value="resource.ResourceSkill">@SkillLevel.Low</SelectItem>
-                    <SelectItem Value="resource.ResourceSkill">@SkillLevel.Medium</SelectItem>
-                    <SelectItem Value="resource.ResourceSkill">@SkillLevel.High</SelectItem>
-                }
-            </Select>
-        </FieldBody>
-        <Button Color="Color.Primary" Clicked="OnAddSkillClick">Add</Button>
-    </Field>
-    <Field Horizontal="true">
-        <FieldLabel ColumnSize="ColumnSize.Is2"></FieldLabel>
-        <FieldBody ColumnSize="ColumnSize.Is4">
-            <Select Multiple="true" TValue="Guid" @bind-SelectedValue="@skillId">
-                @foreach (var skill in resource.ResourceSkill)
-                {
-                    //Need to get the name of the skill so let's search for it by the skill id in our skills list
-                    var skillData = skills.Find(x => x.Id == skill.SkillId);
-                    <SelectItem Value="@skill.SkillId">@skillData.Name</SelectItem>
-                }
-            </Select>
-        </FieldBody>
-        <div>
-            <Button Color="Color.Danger" Clicked="OnRemoveSkillClick">Remove All</Button>
-        </div>
-    </Field>
-    <Field Horizontal="true">
-        <FieldLabel ColumnSize="ColumnSize.Is2">Availability Calendar</FieldLabel>
-        <FieldBody ColumnSize="ColumnSize.IsAuto">
-            <DateEdit TValue="DateTime?" @bind-Values="@resource.AvailabilityCalendar" />
-        </FieldBody>
-    </Field>
-</div>
+    <div class="list-table">
+        <Field Horizontal="true">
+            <FieldLabel ColumnSize="ColumnSize.Is2">Name</FieldLabel>
+            <FieldBody ColumnSize="ColumnSize.Is2">
+                <Validation Validator="@ValidateNameExists">
+                    <TextEdit @bind-Text="@resource.Name">
+                        <Feedback>
+                            <ValidationNone>Name is required</ValidationNone>
+                        </Feedback>
+                    </TextEdit>
+                </Validation>
+            </FieldBody>
+        </Field>
+        <Field Horizontal="true">
+            <FieldLabel ColumnSize="ColumnSize.Is2">Title</FieldLabel>
+            <FieldBody ColumnSize="ColumnSize.Is2">
+                <TextEdit @bind-Text="@resource.Title" />
+            </FieldBody>
+        </Field>
+        <Field Horizontal="true">
+            <FieldLabel ColumnSize="ColumnSize.Is2">Pay Rate</FieldLabel>
+            <FieldBody ColumnSize="ColumnSize.IsAuto">
+                <NumericEdit @bind-Value="@resource.PayRate" />
+            </FieldBody>
+        </Field>
+        <Field Horizontal="true">
+            <FieldLabel ColumnSize="ColumnSize.Is2">Skill and Level</FieldLabel>
+            <FieldBody ColumnSize="ColumnSize.Is2">
+                <Select TValue="Guid" @bind-SelectedValue="@skillId">
+                    @if (skillId == Guid.Empty)
+                    {
+                        <SelectItem Value="@skillId">Select Skill...</SelectItem>
+                    }
+                    @foreach (var skill in skillTempList)
+                    {
+                        <SelectItem Value="skill.Id">@skill.Name</SelectItem>
+                    }
+                </Select>
+            </FieldBody>
+            <FieldBody ColumnSize="ColumnSize.Is2">
+                <Select TValue="string" @bind-SelectedValue="skillLevel">
+                    @if (String.IsNullOrEmpty(skillLevel))
+                    {
+                        <SelectItem Value="@skillId">Select Skill Level...</SelectItem>
+                    }
+                    <SelectItem Value="SkillLevel.Low.ToString()">@SkillLevel.Low</SelectItem>
+                    <SelectItem Value="SkillLevel.Medium.ToString()">@SkillLevel.Medium</SelectItem>
+                    <SelectItem Value="SkillLevel.High.ToString()">@SkillLevel.High</SelectItem>
+                    }
+                </Select>
+            </FieldBody>
+            <Button Color="Color.Primary" Clicked="OnAddSkillClick">Add</Button>
+        </Field>
+        <Field Horizontal="true">
+            <FieldLabel ColumnSize="ColumnSize.Is2"></FieldLabel>
+            <FieldBody ColumnSize="ColumnSize.Is4">
+                <Select Multiple="true" TValue="Guid" @bind-SelectedValue="@resourceSkillId">
+                    @foreach (var resourceSkill in resourceSkills)
+                    {
+                        //Need to get the name of the skill so let's search for it by the skill id in our skills list
+                        var skillData = skills.Find(x => x.Id == resourceSkill.SkillId);
+                        <SelectItem Value="@resourceSkill.Id">@skillData.Name (@resourceSkill.SkillLevel)</SelectItem>
+                    }
+                </Select>
+            </FieldBody>
+            <div>
+                <Button Color="Color.Danger" Clicked="OnRemoveSkillClick">Remove All</Button>
+            </div>
+        </Field>
+        <Field Horizontal="true">
+            <FieldLabel ColumnSize="ColumnSize.Is2">Availability</FieldLabel>
+            <FieldBody ColumnSize="ColumnSize.Is2">
+                <Label>From:</Label><DateEdit TValue="DateTime?" @bind-Date="@From" />
+            </FieldBody>
+            <FieldBody ColumnSize="ColumnSize.Is2">
+                <Label>To:</Label><DateEdit TValue="DateTime?" @bind-Date="@To" />
+            </FieldBody>
+            <div>
+                <Button Color="Color.Primary" Clicked="OnAddAvailabilityClick">Add</Button>
+            </div>
+        </Field>
+        <Field Horizontal="true">
+            <FieldLabel ColumnSize="ColumnSize.Is2"></FieldLabel>
+            <FieldBody ColumnSize="ColumnSize.Is4">
+                <Select Multiple="true" TValue="Guid" @bind-SelectedValue="@availabilityId">
+                    @foreach (var availability in resource.AvailabilityCalendar)
+                    {
+                        <SelectItem Value="@availability.Id">@availability.From.ToString("MM/dd/yyyy") - @availability.To.ToString("MM/dd/yyyy")</SelectItem>
+                    }
+                </Select>
+            </FieldBody>
+            <div>
+                <Button Color="Color.Danger" Clicked="OnRemoveAvailabilityClick">Remove All</Button>
+            </div>
+        </Field>
+    </div>
+    <div style="padding-top:1em; padding-bottom:2em;">
+        <Button class="back-button" Color="Color.Dark" @onclick="ClickBack">Back</Button>
+        @if (!success)
+        {
+            <Button class="save-button" Color="Color.Dark" @onclick="Save">Save</Button>
+        }
+        else
+        {
+            <Button class="save-button" Color="Color.Dark" @onclick="Save">Save Successful</Button>
+        }
+    </div>
 </div>

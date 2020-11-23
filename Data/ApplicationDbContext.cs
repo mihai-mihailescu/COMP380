@@ -26,6 +26,7 @@ namespace ProjectManagementSystem.Data
         public DbSet<Deliverable> Deliverable { get; set; }
         public DbSet<Requirement> Requirement { get; set; }
         public DbSet<Skill> Skill { get; set; }
+        public DbSet<ResourceSkill> ResourceSkill { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
