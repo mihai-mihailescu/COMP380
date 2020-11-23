@@ -184,6 +184,30 @@ namespace ProjectManagementSystem.Migrations
                     b.ToTable("Resource");
                 });
 
+            modelBuilder.Entity("ProjectManagementSystem.Features.Shared.ResourceSkill", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ResourceId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid>("SkillId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("SkillLevel")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id")
+                        .HasAnnotation("SqlServer:Clustered", false);
+
+                    b.HasIndex("SkillId")
+                        .IsUnique();
+
+                    b.ToTable("ResourceSkill");
+                });
+
             modelBuilder.Entity("ProjectManagementSystem.Features.Shared.TaskIssue", b =>
                 {
                     b.Property<Guid>("TaskId")
@@ -329,32 +353,16 @@ namespace ProjectManagementSystem.Migrations
                             b1.WithOwner()
                                 .HasForeignKey("ResourceId");
                         });
+                });
 
-                    b.OwnsMany("ProjectManagementSystem.Features.Resources.ResourceSkill", "ResourceSkill", b1 =>
-                        {
-                            b1.Property<Guid>("Id")
-                                .ValueGeneratedOnAdd()
-                                .HasColumnType("uniqueidentifier");
-
-                            b1.Property<Guid>("ResourceId")
-                                .HasColumnType("uniqueidentifier");
-
-                            b1.Property<Guid>("SkillId")
-                                .HasColumnType("uniqueidentifier");
-
-                            b1.Property<string>("SkillLevel")
-                                .IsRequired()
-                                .HasColumnType("nvarchar(max)");
-
-                            b1.HasKey("Id");
-
-                            b1.HasIndex("SkillId");
-
-                            b1.ToTable("ResourceSkill");
-
-                            b1.WithOwner()
-                                .HasForeignKey("SkillId");
-                        });
+            modelBuilder.Entity("ProjectManagementSystem.Features.Shared.ResourceSkill", b =>
+                {
+                    b.HasOne("ProjectManagementSystem.Features.Skills.Skill", null)
+                        .WithOne()
+                        .HasForeignKey("ProjectManagementSystem.Features.Shared.ResourceSkill", "SkillId")
+                        .HasConstraintName("FK_SkillId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("ProjectManagementSystem.Features.Shared.TaskIssue", b =>

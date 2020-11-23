@@ -1,6 +1,8 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.Data.SqlClient;
+using Microsoft.EntityFrameworkCore;
 using ProjectManagementSystem.Data;
 using ProjectManagementSystem.Features.Resources.Models;
+using ProjectManagementSystem.Features.Shared;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -19,8 +21,8 @@ namespace ProjectManagementSystem.Features.Resources
 
         public async Task<List<Resource>> GetResourcesAsync()
         {
-            var resources = await(from resource in this.db.Resource
-                                    select resource).ToListAsync();
+            var resources = await (from resource in this.db.Resource
+                                   select resource).ToListAsync();
 
             return resources;
         }
@@ -37,9 +39,56 @@ namespace ProjectManagementSystem.Features.Resources
 
         public async Task<Resource> GetResourceById(Guid Id)
         {
-            var resource = await this.db.Resource.FindAsync(Id);                                  
+            var resourceData = await (from resource in this.db.Resource                            
+                                where resource.Id == Id
+                                select resource).FirstAsync();
 
-            return resource;
+            return resourceData;
+        }
+
+        public async Task<List<ResourceSkill>> GetResourceSkillsByResourceId(Guid Id)
+        {
+            var resourceSkills = await (from resourceSkill in this.db.ResourceSkill
+                                        where resourceSkill.ResourceId == Id.ToString()
+                                        select resourceSkill).ToListAsync();
+            return resourceSkills;
+        }
+
+        public int SaveResource(Resource resourceData, List<ResourceSkill> resourceSkills)
+        {
+            int entriesSaved = 0;
+            ResourceSkill resourceSkill = new ResourceSkill();
+
+            var resource = new Resource()
+            {
+                Name = resourceData.Name,
+                Title = resourceData.Title,
+                PayRate = resourceData.PayRate,
+                AvailabilityCalendar = resourceData.AvailabilityCalendar                
+            };
+
+            foreach(var rs in resourceSkills)
+            {
+                resourceSkill = new ResourceSkill()
+                {
+                    SkillLevel = rs.SkillLevel,
+                    SkillId = rs.SkillId,
+                    ResourceId = resource.Id.ToString()
+                };
+            }
+
+            try
+            {
+                this.db.Add(resource);
+                this.db.Add(resourceSkill);
+                entriesSaved = this.db.SaveChanges();
+            }
+            catch (SqlException ex)
+            {
+                Console.Write(ex.Message);
+            }
+
+            return entriesSaved;
         }
     }
 }
