@@ -1,12 +1,12 @@
 @page "/issues/{IssueId:guid}"
 @page "/issues/create"
 @using ProjectManagementSystem.Features.Issues.Models
+@using ProjectManagementSystem.Features.Tasks.Models
 @using ProjectManagementSystem.Features.ActionItems
-@using ProjectManagementSystem.Features.Decision
 @using ProjectManagementSystem.Features.Tasks
 @using ProjectManagementSystem.Features.Data
 @using ProjectManagementSystem.Features.Shared
- 
+
 @inject IssueService IssueService
 @inject TaskService TaskService
 @inject NavigationManager navigation
@@ -17,13 +17,13 @@
     public Guid IssueId { get; set; } //The Id retrieved when Issue is clicked on
 
     Issue issue = new Issue(); //Associated Issues
+    TaskModel taskModel = new TaskModel();
     IssueModel issueModel = new IssueModel(); //retrieves issueModel to have list of Items, Action-Items, and Decisions
     List<Issues.Issue> issues = new List<Issues.Issue>(); //Associated Issues
-    List<Issue> tempIssues = new List<Issue>(); //Unassociated Issues
-    List<ActionItems.ActionItem> actionItems = new List<ActionItems.ActionItem>();
+    List<Issue> issueTempList = new List<Issue>(); //Unassociated Issues
 
     Guid issueId;
-    Guid actionItemId; 
+    Guid actionItemId;
     Guid decisionId;
 
     bool success;
@@ -35,7 +35,7 @@
         {
             issueModel = await IssueService.GetIssueById(IssueId);
         }
-        tempIssues = await IssueService.GetIssuesDataAsync();
+        issueTempList = await IssueService.GetIssuesDataAsync();
         CreateTempIssueLists();
     }
 
@@ -58,7 +58,7 @@
 
             if (issues[i].Id != associatedIssue?.IssueId)
             {
-                tempIssues.Add(issues[i]);
+                issueTempList.Add(issues[i]);
             }
         }
     }
@@ -92,33 +92,33 @@
     private void OnAddIssueClick()
     {
         // We do not want to add an empty guid
-        if (issueId == Guid.Empty)
+        if(issueId == Guid.Empty)
         {
-            var selectedIssue = tempIssues.Find(x => x.Id == issueId);
-            issues.Add(selectedIssue);
-
-            //Remove issue from temp list
-            tempIssues.Remove(selectedIssue);
+            return;
         }
+
+        //Get issue from temp list
+        var issue = issueTempList.Find(x => x.Id == issueId);
+
+        // Add the TaskIssue data to our Task.TaskIssue list
+        taskModel.Task.TaskIssue.Add(new TaskIssue { TaskId = taskModel.Task.Id, Task = taskModel.Task, IssueId = issueId, Issue = issue });
+
+        // Remove the issue from our temp list because we don't want the user to add it again
+        issueTempList.Remove(issue);
+
+        // Set the issueId to empty so we display Select...
+        issueId = Guid.Empty;
     }
 
-    private void OnAddIssueClick(Guid issueId)
+    private void OnRemoveIssuesClick()
     {
-        if (issueId != Guid.Empty)
+        var taskIssues = taskModel.Task.TaskIssue.ToList();
+
+        foreach (var taskIssue in taskIssues)
         {
-            var selectedIssue = tempIssues.Find(x => x.Id == issueId);
-            issues.Add(selectedIssue);
-
-            //remove issue from temp list
-            tempIssues.Remove(selectedIssue);
+            issueTempList.Add(taskIssue.Issue);
+            taskModel.Task.TaskIssue.Remove(taskIssue);
         }
-    }
-
-    private void OnRemoveIssueClick()
-    {
-        var taskIssues = issueModel.Issue.TaskIssue.ToList();
-
-
     }
 
     private void ClickBack()
@@ -126,28 +126,49 @@
         navigation.NavigateTo("/issues");
     }
 
-    private void OnExpectedCompletionDateChange(DateTime? expectedDate) {
-        //update on expected completion date change
-    }
-
-    private void OnActualCompletionDateChange(DateTime? actualDate) {
-        //update on actual completion date
-        
-    }
-    private void OnClearActionItemClick()
+    private void OnExpectedCompletionDateChange(DateTime? expectedDate)
     {
-        issueModel.Issue.ActionItemId = null;
+        //update on expected completion date change
+        taskModel.Task.ExpectedEndDate = expectedDate;
+        if (taskModel.Task.ExpectedStartDate != null)
+        {
+            var expectedTime = taskModel.Task.ExpectedEndDate.Value;
+            if ((int)expectedTime.TotalDays != 1)
+            {
+                taskModel.Task.ExpectedDuration = ((int)expectedTime.TotalDays).ToString() + " days";
+            }
+            else
+            {
+                taskModel.Task.ExpectedDuration = ((int)expectedTime.TotalDays).ToString() + " days";
+            }
+        }
+        else
+        {
+            taskModel.Task.ExpectedDuration = "0 days";
+        }
     }
 
-    private void OnClearDecisionClick() {
-        issueModel.Issue.DecisionId = null;
+    private void OnActualCompletionDateChange(DateTime? actualDate)
+    {
+        //update on actual completion date
+        taskModel.Task.ExpectedEndDate = actualDate;
+        if (taskModel.Task.ExpectedStartDate != null)
+        {
+            var actualTime = taskModel.Task.ExpectedEndDate.Value;
+            if ((int)actualTime.TotalDays != 1)
+            {
+                taskModel.Task.ExpectedDuration = ((int)actualTime.TotalDays).ToString() + " days";
+            }
+            else
+            {
+                taskModel.Task.ExpectedDuration = ((int)actualTime.TotalDays).ToString() + " days";
+            }
+        }
+        else
+        {
+            taskModel.Task.ExpectedDuration = "0 days";
+        }
     }
-
-    private void OnClearIssueClick() {
-        issueModel.Issue.IssueId = null;
-    }
-
-
 }
 
 <div class="container-fluid">
@@ -160,94 +181,110 @@
         <h1>Create Resource</h1>
     }
 
-    <div class="list-table">
+<div class="list-table">
+    <Field Horizontal="true">
+        <FieldLabel ColumnSize="ColumnSize.Is2">Name</FieldLabel>
+        <FieldBody ColumnSize="ColumnSize.Is10">
+            <Validation Validator="@ValidateNameExists">
+                <TextEdit @bind-Text="@issueModel.Issue.Name">
+                    <Feedback>
+                        <ValidationNone>Name is required</ValidationNone>
+                    </Feedback>
+                </TextEdit>
+            </Validation>
+        </FieldBody>
+    </Field>
+    <Field Horizontal="true">
+        <FieldLabel ColumnSize="ColumnSize.Is2">Description</FieldLabel>
+        <FieldBody ColumnSize="ColumnSize.Is10">
+            <TextEdit @bind-Text="@issueModel.Issue.Description" />
+        </FieldBody>
+    </Field>
+    <Field Horizontal="true">
+        <FieldLabel ColumnSize="ColumnSize.Is2">Priority</FieldLabel>
+        <FieldBody ColumnSize="ColumnSize.Is10">
+            <TextEdit @bind-string="@issueModel.Issue.Priority" />
+        </FieldBody>
+    </Field>
+    <Field Horizontal="true">
+        <FieldLabel ColumnSize="ColumnSize.Is2">Severity</FieldLabel>
+        <FieldBody ColumnSize="ColumnSize.Is10">
+            <TextEdit @bind-string="@issueModel.Issue.Severity" />
+        </FieldBody>
+    </Field>
+    <Field Horizontal="true">
+        <FieldLabel ColumnSize="ColumnSize.Is2">Date Raised</FieldLabel>
+        <FieldBody ColumnSize="ColumnSize.IsAuto">
+            <DateEdit TValue="DateTime?" @bind-Date="@issueModel.Issue.DateRaised" />
+        </FieldBody>
+    </Field>
+    <Field Horizontal="true">
+        <FieldLabel ColumnSize="ColumnSize.Is2">Date Assigned</FieldLabel>
+        <FieldBody ColumnSize="ColumnSize.IsAuto">
+            <DateEdit TValue="DateTime?" @bind-Date="@issueModel.Issue.DateAssigned" />
+        </FieldBody>
+    </Field>
+    <Field Horizontal="true">
+        <FieldLabel ColumnSize="ColumnSize.Is2">Expected Completion Date</FieldLabel>
+        <FieldBody ColumnSize="ColumnSize.IsAuto">
+            <DateEdit TValue="DateTime?" Date="@issueModel.Issue.ExpectedCompletionDate" DateChanged="@OnExpectedCompletionDateChange" />
+        </FieldBody>
+    </Field>
+    <Field Horizontal="true">
+        <FieldLabel ColumnSize="ColumnSize.Is2">Actual Completion Date</FieldLabel>
+        <FieldBody ColumnSize="ColumnSize.IsAuto">
+            <DateEdit TValue="DateTime?" @bind-Date="@issueModel.Issue.ActualCompletionDate" DateChanged="@OnActualCompletionDateChange" />
+        </FieldBody>
+    </Field>
+    <Field Horizontal="true">
+        <FieldLabel ColumnSize="ColumnSize.Is2">Status</FieldLabel>
+        <FieldBody ColumnSize="ColumnSize.IsAuto">
+            <DateEdit TValue="DateTime?" @bind-Text="@issueModel.Issue.Status" />
+        </FieldBody>
+    </Field>
+    <Field Horizontal="true">
+        <FieldLabel ColumnSize="ColumnSize.Is2">Status Description</FieldLabel>
+        <FieldBody ColumnSize="ColumnSize.IsAuto">
+            <DateEdit TValue="DateTime?" @bind-Text="@issueModel.Issue.StatusDescription" />
+        </FieldBody>
         <Field Horizontal="true">
-            <FieldLabel ColumnSize="ColumnSize.Is2">Name</FieldLabel>
-            <FieldBody ColumnSize="ColumnSize.Is2">
-                <Validation Validator="@ValidateNameExists">
-                    <TextEdit @bind-Text="@issue.Name">
-                        <Feedback>
-                            <ValidationNone>Name is required</ValidationNone>
-                        </Feedback>
-                    </TextEdit>
-                </Validation>
-            </FieldBody>
-        </Field>
-        <Field Horizontal="true">
-            <FieldLabel ColumnSize="ColumnSize.Is2">Description</FieldLabel>
+            <FieldLabel ColumnSize="ColumnSize.Is2">Update Date</FieldLabel>
             <FieldBody ColumnSize="ColumnSize.IsAuto">
-                <NumericEdit @bind-Value="@issue.Description" />
+                <DateEdit TValue="DateTime?" @bind-Date="@issueModel.Issue.DateRaised" />
             </FieldBody>
         </Field>
-        <Field Horizontal="true">
-            <FieldLabel ColumnSize="ColumnSize.Is2">Issues</FieldLabel>
-            <FieldBody ColumnSize="ColumnSize.Is2">
-                <Select TValue="Guid" @bind-SelectedValue="@issueId">
-                    @if (issueId == Guid.Empty)
-                    {
-                        <SelectItem Value="@issueId">Select Skill...</SelectItem>
-                    }
-                    @foreach (var issue in tempIssues)
-                    {
-                        <SelectItem Value="issue.Id">@issue.Name</SelectItem>
-                    }
-                </Select>
-            </FieldBody>
-            <Button Color="Color.Primary" Clicked="OnAddIssueClick">Add</Button>
-        </Field>
-        <Field Horizontal="true">
-            <FieldLabel ColumnSize="ColumnSize.Is2">Issues</FieldLabel>
-            <FieldBody ColumnSize="ColumnSize.Is3">
-                <Select multiple="true" TValue="Guid" @bind-SelectedValue="@issueId">
-                    @foreach (var issue in tempIssues)
-                    {
-                        <SelectItem Value="issue.Id">@issue.Name</SelectItem>
-                    }
-                </Select>
-                <div style="padding-top:5px;">
-                    <Button Color="Color.Primary" Clicked="OnAddIssueClick">Add</Button>
-                </div>
-            </FieldBody>
-        </Field>
-        <Field Horizontal="true">
-            <FieldLabel ColumnSize="ColumnSize.Is2">Task Associations</FieldLabel>
-            <FieldBody ColumnSize="ColumnSize.Is3">
-                <Select Multiple="true" TValue="Guid" @bind-SelectedValue="@issueId">
-                    @foreach (var issue in issues)
-                    {
-                        issueId = issue.Id;
-                        <SelectItem Value="issue.Id">@issue.Name</SelectItem>
-                    }
-                </Select>
-                <div style="padding-top:5px;">
-                    <Button Color="Color.Danger" Clicked="OnRemoveIssueClick">Remove</Button>
-                </div>
-            </FieldBody>
-        </Field>
-        <Field Horizontal="true">
-                <FieldLabel ColumnSize="ColumnSize.Is2">Unassociated Issues</FieldLabel>
-                <FieldBody ColumnSize="ColumnSize.Is3">
-                    <div class="multiple-selector">
-                        <ul class="selectable-ul">
-                            @foreach (var issue in tempIssues)
-                            {
-                                <li @onclick="@(OnAddIssueClick)">@issue.Name</li>
-                            }
-                        </ul>
-                        <div class="multiple-selector-buttons">
-                            <button type="button" @onclick="SelectAll"></button>
-                            <button type="button" @onclick="DeselectAll">@removeAllText</button>
-                        </div>
-                        <ul class="selectable-ul">
-                            @foreach (var issue in issues)
-                            {
-                                <li @onclick="@OnRemoveIssueClick">@issue.Name</li>
-                            }
-                        </ul>
-                    </div>
-                </FieldBody>
-            </Field>
-    </div>
+    </Field>
+    <Field Horizontal="true">
+        <FieldLabel ColumnSize="ColumnSize.Is2">Issues</FieldLabel>
+        <FieldBody ColumnSize="ColumnSize.Is3">
+            <Select TValue="Guid" @bind-SelectedValue="@issueId">
+                @if (issueId == Guid.Empty)
+                {
+                    <SelectItem Value="@issueId">Select...</SelectItem>
+                }
+                @foreach (var issue in issueTempList)
+                {
+                    <SelectItem Value="issue.Id">@issue.Name</SelectItem>
+                }
+            </Select>
+        </FieldBody>
+        <Button Color="Color.Primary" Clicked="OnAddIssueClick">Add</Button>
+    </Field>
+    <Field Horizontal="true">
+        <FieldLabel ColumnSize="ColumnSize.Is2"></FieldLabel>
+        <FieldBody ColumnSize="ColumnSize.Is3">
+            <Select Multiple="true" TValue="Guid" @bind-SelectedValue="@issueId">
+                @foreach (var item in taskModel.Task.TaskIssue)
+                {
+                    <SelectItem Value="@item.IssueId">@item.Issue.Name</SelectItem>
+                }
+            </Select>
+        </FieldBody>
+        <div>
+            <Button Color="Color.Danger" Clicked="OnRemoveIssuesClick">Remove All</Button>
+        </div>
+    </Field>
+</div>
     <div style="padding-top:1em; padding-bottom:2em;">
         <Button class="back-button" Color="Color.Dark" @onclick="ClickBack">Back</Button>
         @if (!success)
