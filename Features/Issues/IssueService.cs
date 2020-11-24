@@ -50,6 +50,15 @@ namespace ProjectManagementSystem.Features.Issues
             return issueModel;
         }
         
+        public async Task<List<Issue>> GetIssueById(Guid Id){
+            var issueModel = await(
+                from issue in this.db.Issue
+                where issue.Id == Id
+                select new IssueModel { Issue = issue}
+                ).FirstOrDefaultAsync();
+            return issueModel;
+        }
+        
         public int SaveIssue(Issue issueData){
             int entriesSaved = 0;
             
