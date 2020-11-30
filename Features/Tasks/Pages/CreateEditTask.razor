@@ -131,7 +131,7 @@
 
     private void OnAddPredecessorTaskClick()
     {
-        if (predecessorTaskId == null)
+        if (predecessorTaskId == Guid.Empty)
         {
             return;
         }
@@ -162,7 +162,7 @@
 
     private void OnAddSuccessorTaskClick()
     {
-        if (successorTaskId == null)
+        if (successorTaskId == Guid.Empty)
         {
             return;
         }
