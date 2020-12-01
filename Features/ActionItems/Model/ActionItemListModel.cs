@@ -11,13 +11,11 @@ namespace ProjectManagementSystem.Features.ActionItems.Models
         public string IssueName { get; set; }
         public string ResourceName { get; set; }
         public string ActionItemName { get; set; }
-        public string ActionItemDescription { get; set; }
-        public string ActionItemStatus { get; set; }
-        public string ActionItemStatusDescription { get; set; }
+        public Status Status { get; set; }
         public DateTime? DateCreated { get; set; }
         public DateTime? DateAssigned { get; set; }
-        public
-
+        public DateTime? ExpectedCompletionDate { get; set; }
+        public DateTime? ActualCompletionDate { get; set; }
     }
 }
 

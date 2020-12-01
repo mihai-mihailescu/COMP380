@@ -18,8 +18,8 @@ namespace ProjectManagementSystem.Features.ActionItems
         public Status status { get; set; }
         public string statusDescription { get; set; }
         public DateTime UpdateDate { get; set; }
-        public Guid ResourceId { get; set; }
-        public Guid IssueId { get; set; }
+        //public Guid ResourceId { get; set; }
+        //public Guid IssueId { get; set; }
 
         public ActionItem()
         {
@@ -44,8 +44,8 @@ namespace ProjectManagementSystem.Features.ActionItems
             actionItem.Property(x => x.statusDescription);
             actionItem.Property(x => x.UpdateDate);
 
-            actionItem.HasOne<Resource>().WithOne().HasForeignKey<ActionItem>(x => x.ResourceId).HasConstraintName("FK_Resource_AI");
-            actionItem.HasOne<Issue>().WithOne().HasForeignKey<ActionItem>(x => x.IssueId).HasConstraintName("FK_Issue");
+            //actionItem.HasOne<Resource>().WithOne().HasForeignKey<ActionItem>(x => x.ResourceId).HasConstraintName("FK_Resource_AI");
+            //actionItem.HasOne<Issue>().WithOne().HasForeignKey<ActionItem>(x => x.IssueId).HasConstraintName("FK_Issue");
         }
     }
     public enum Status
