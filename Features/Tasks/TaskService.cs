@@ -58,7 +58,7 @@ namespace ProjectManagementSystem.Features.Tasks
             return taskModel;
         }
 
-        public int SaveTask(Task taskData)
+        public async Task<int> SaveTask(Task taskData)
         {
             int entriesSaved = 0;
 
@@ -89,7 +89,7 @@ namespace ProjectManagementSystem.Features.Tasks
             try
             {
                 this.db.Add(task);
-                entriesSaved = this.db.SaveChanges();
+                entriesSaved = await this.db.SaveChangesAsync();
             }
             catch (SqlException ex)
             {

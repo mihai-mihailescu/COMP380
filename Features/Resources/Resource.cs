@@ -12,8 +12,7 @@ namespace ProjectManagementSystem.Features.Resources
         public string Name { get; set; }
         public string Title { get; set; }               
         public decimal PayRate { get; set; }
-        public Collection<AvailabilityCalendar> AvailabilityCalendar { get; set; }
-        public Collection<ResourceSkill> ResourceSkill { get; set; } = new Collection<ResourceSkill>();
+        public Collection<AvailabilityCalendar> AvailabilityCalendar { get; set; } = new Collection<AvailabilityCalendar>();       
 
         public Resource()
         {
@@ -41,49 +40,14 @@ namespace ProjectManagementSystem.Features.Resources
                     ac.Property(x => x.To);
                     ac.WithOwner().HasForeignKey(x => x.ResourceId);
                 });
-
-            resource.OwnsMany(x => x.ResourceSkill,
-                rs =>
-                {
-                    rs.ToTable("ResourceSkill");
-                    rs.HasKey(x => x.Id);                
-                    rs.WithOwner().HasForeignKey(x => x.ResourceId);
-                    rs.WithOwner().HasForeignKey(x => x.SkillId);
-                    rs.Property(x => x.SkillLevel).HasConversion<string>();
-                });
         }
     }
 
     public class AvailabilityCalendar
     {
-        public Guid Id { get; private set; }
+        public Guid Id { get; set; }
         public Guid ResourceId { get; set; }
         public DateTime From { get; set; }
-        public DateTime To { get; set; }
-
-        public AvailabilityCalendar()
-        {
-            Id = Guid.NewGuid();
-        }
-    }
-
-    public class ResourceSkill
-    {
-        public Guid Id { get; private set; }        
-        public Guid ResourceId { get; set; }
-        public Guid SkillId { get; set; }       
-        public SkillLevel SkillLevel { get; set; }
-
-        public ResourceSkill()
-        {
-            Id = Guid.NewGuid();
-        }
-    }
-
-    public enum SkillLevel
-    {
-        Low,
-        Medium,
-        High
+        public DateTime To { get; set; }        
     }
 }

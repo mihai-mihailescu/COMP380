@@ -45,6 +45,7 @@ namespace ProjectManagementSystem
                 .AddBootstrapProviders()
                 .AddFontAwesomeIcons();
 
+            
             services.AddTransient(typeof(ResourceService), typeof(ResourceService));
             services.AddTransient(typeof(TaskService), typeof(TaskService));
             services.AddTransient(typeof(IssueService), typeof(IssueService));
