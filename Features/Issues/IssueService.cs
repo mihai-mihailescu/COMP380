@@ -1,7 +1,7 @@
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using ProjectManagementSystem.Data;
-using ProjectManagementSystem.Features.Deliverables.Models;
+using ProjectManagementSystem.Features.Issues.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -21,7 +21,7 @@ namespace ProjectManagementSystem.Features.Issues
         public async Task<List<IssueListModel>> GetIssuesListDataAsync(){
             var issueDataList = await(
                 from issue in this.db.Issue
-                //What to link here
+
                 select new IssueListModel
                 {
                     Id = issue.Id,
