@@ -27,8 +27,6 @@
     Guid taskId;
 
     bool success;
-    private string removeAllText = "<<";
-
 
     protected override async System.Threading.Tasks.Task OnInitializedAsync()
     {
@@ -81,35 +79,29 @@
 
     private void OnAddTaskClick()
     {
-        if (taskId != Guid.Empty)
+        if (taskId == Guid.Empty)
+            return;
         //Clicking "Add Task" without selecting a task does nothing
         //Need to add selected task to the ListOfTasks
-        {
-            var selectedTask = tempTasks.Find(x => x.Id == taskId);
-            tasks.Add(selectedTask);
+        var selectedTask = tempTasks.Find(x => x.Id == taskId);
+        tasks.Add(selectedTask);
 
-            ////Remove from the temp list the task I just added
-            tempTasks.Remove(selectedTask);
-        }
-    }
+        ////Remove from the temp list the task I just added
+        tempTasks.Remove(selectedTask);
 
-    private void OnAddTaskClick(Guid taskId)
-    {
-        if (taskId != Guid.Empty)
-        //Clicking "Add Task" without selecting a task does nothing
-        //Need to add selected task to the ListOfTasks
-        {
-            var selectedTask = tempTasks.Find(x => x.Id == taskId);
-            tasks.Add(selectedTask);
+        taskId = Guid.Empty;
 
-            ////Remove from the temp list the task I just added
-            tempTasks.Remove(selectedTask);
-        }
     }
 
     private void OnRemoveTaskClick()
     {
+        if (taskId == Guid.Empty)
+            return;
+        var selectedTask = tasks.Find(x => x.Id == taskId);
+        tempTasks.Add(selectedTask);
+        tasks.Remove(selectedTask);
 
+        taskId = Guid.Empty;
     }
 
     private void OnNameChangeClick()
@@ -174,7 +166,7 @@
             <DateEdit TValue="DateTime?" @bind-Text="@deliverableModel.Deliverable.DueDate" />
         </FieldBody>
     </Field>
-    @*<Field Horizontal="true">
+    <Field Horizontal="true">
             <FieldLabel ColumnSize="ColumnSize.Is2">Tasks</FieldLabel>
             <FieldBody ColumnSize="ColumnSize.Is3">
                 <Select TValue="Guid" @bind-SelectedValue="@taskId">
@@ -189,27 +181,14 @@
                 </Select>
             </FieldBody>
             <Button Color="Color.Primary" Clicked="OnAddTaskClick">Add</Button>
-        </Field>*@
-    <Field Horizontal="true">
-        <FieldLabel ColumnSize="ColumnSize.Is2">Tasks</FieldLabel>
-        <FieldBody ColumnSize="ColumnSize.Is3">
-            <Select Multiple="true" TValue="Guid" @bind-SelectedValue="@taskId">
-                @foreach (var task in tempTasks)
-                {
-                    <SelectItem Value="task.Id">@task.Name</SelectItem>
-                }
-            </Select>
-            <div style="padding-top:5px;">
-                <Button Color="Color.Primary" Clicked="OnAddTaskClick">Add</Button>
-            </div>
-        </FieldBody>
-    </Field>
+     </Field>
     <Field Horizontal="true">
         <FieldLabel ColumnSize="ColumnSize.Is2">Task Associations</FieldLabel>
         <FieldBody ColumnSize="ColumnSize.Is3">
             <Select Multiple="true" TValue="Guid" @bind-SelectedValue="@taskId">
                 @foreach (var task in tasks)
                 {
+                    //Need to populate Task Associations
                     //taskId = task.Id;
                     //I need to use taskId for selections
                     <SelectItem Value="task.Id">@task.Name</SelectItem>
