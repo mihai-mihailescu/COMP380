@@ -124,20 +124,9 @@ namespace ProjectManagementSystem.Data
                 var action_itemToAdd = new[]
                {
                     new ActionItem(){ 
-                        Name = "Action Item 1",
-                        Description = "description", 
-                        DateCreated = DateTime.Now, 
-                        DateAssigned = DateTime.Now,
-                        ActualCompletionDate = DateTime.Now, 
-                        ExpectedCompletionDate = DateTime.Now, 
-                        status = Features.ActionItems.Status.Closed, 
-                        statusDescription = null,    
-                        UpdateDate = DateTime.Now,
-                        //ResourceId = Guid.Empty,
-                        //IssueId = Guid.Empty,
+                        Name = "Action Item 1"
                     }
             
-                  
                 };
                 db.Set<ActionItem>().AddRange(action_itemToAdd);
                 db.SaveChanges();

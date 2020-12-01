@@ -31,9 +31,9 @@ namespace ProjectManagementSystem.Features.ActionItems
                          ActionItemName = action_item.Name, 
                          ExpectedCompletionDate  = action_item.ExpectedCompletionDate, 
                          ActualCompletionDate = action_item.ActualCompletionDate, 
-                         Status = action_item.status,
-                         //IssueName = issue.Name,
-                         //ResourceName = resource.Name
+                         Status = (Status)action_item,
+                         //IssueName = Issue.Name,
+                         //ResourceName = Resource.Name
                      }
                          ).ToListAsync();
 
@@ -76,8 +76,8 @@ namespace ProjectManagementSystem.Features.ActionItems
                 statusDescription = action_itemData.statusDescription,
                 ExpectedCompletionDate = action_itemData.ExpectedCompletionDate,
                 ActualCompletionDate = action_itemData.ActualCompletionDate,
-               //ResourceId = action_itemData.ResourceId,
-                //IssueId = action_itemData.IssueId,
+                ResourceId = action_itemData.ResourceId,
+                IssueId = action_itemData.IssueId,
                 DateAssigned = action_itemData.DateAssigned,
                 DateCreated = action_itemData.DateCreated,
                 UpdateDate = action_itemData.UpdateDate,
