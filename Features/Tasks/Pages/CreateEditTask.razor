@@ -26,8 +26,7 @@
     List<Tasks.Task> taskGroupTempList = new List<Tasks.Task>();
 
     Guid predecessorTaskId;
-    Guid successorTaskId;
-    Guid groupTaskId;
+    Guid successorTaskId;    
     Guid issueId;
 
     bool success;
@@ -104,7 +103,7 @@
         }
     }
 
-    private void Save()
+    private async void Save()
     {
         int entriesSaved = 0;
         // If the name is empty, we cannot save because it is required
@@ -112,7 +111,7 @@
         {
             return;
         }
-        else if (TaskId != null)
+        else if (TaskId != Guid.Empty)
         {
             // Save edited changes
             entriesSaved = db.SaveChanges();
@@ -120,7 +119,7 @@
         else
         {
             // Save new changes
-            entriesSaved = TaskService.SaveTask(taskModel.Task);
+            entriesSaved = await TaskService.SaveTask(taskModel.Task);
         }
 
         if (entriesSaved > 0)

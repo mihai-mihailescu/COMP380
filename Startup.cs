@@ -44,11 +44,13 @@ namespace ProjectManagementSystem
                 .AddBootstrapProviders()
                 .AddFontAwesomeIcons();
 
+            
             services.AddTransient(typeof(ResourceService), typeof(ResourceService));
             services.AddTransient(typeof(TaskService), typeof(TaskService));
             services.AddTransient(typeof(IssueService), typeof(IssueService));
             services.AddTransient(typeof(DeliverableService), typeof(DeliverableService));
             services.AddTransient(typeof(SkillService), typeof(SkillService));
+            
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

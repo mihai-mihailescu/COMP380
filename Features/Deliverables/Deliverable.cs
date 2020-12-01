@@ -3,9 +3,6 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using ProjectManagementSystem.Features.Tasks.Pages;
 using System.Collections.ObjectModel;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace ProjectManagementSystem.Features.Deliverables
 {
