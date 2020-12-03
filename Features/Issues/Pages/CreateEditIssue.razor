@@ -26,7 +26,6 @@
     Guid decisionId;
 
     bool success;
-    private string removeAllText = "<<";
 
     protected override async System.Threading.Tasks.Task OnInitializedAsync()
     {
@@ -173,11 +172,11 @@
 <div class="container-fluid">
     @if (IssueId != Guid.Empty)
     {
-        <h1>Edit Resource</h1>
+        <h1>Edit Issue</h1>
     }
     else
     {
-        <h1>Create Resource</h1>
+        <h1>Create New Issue</h1>
     }
 
 <div class="list-table">
@@ -226,13 +225,13 @@
     <Field Horizontal="true">
         <FieldLabel ColumnSize="ColumnSize.Is2">Expected Completion Date</FieldLabel>
         <FieldBody ColumnSize="ColumnSize.IsAuto">
-            <DateEdit TValue="DateTime?" Date="@issueModel.Issue.ExpectedCompletionDate" DateChanged="@OnExpectedCompletionDateChange" />
+            <DateEdit TValue="DateTime?" @bind-Date="@issueModel.Issue.ExpectedCompletionDate"/>
         </FieldBody>
     </Field>
     <Field Horizontal="true">
         <FieldLabel ColumnSize="ColumnSize.Is2">Actual Completion Date</FieldLabel>
         <FieldBody ColumnSize="ColumnSize.IsAuto">
-            <DateEdit TValue="DateTime?" @bind-Date="@issueModel.Issue.ActualCompletionDate" DateChanged="@OnActualCompletionDateChange" />
+            <DateEdit TValue="DateTime?" Date="@issueModel.Issue.ActualCompletionDate" DateChanged="@OnActualCompletionDateChange" />
         </FieldBody>
     </Field>
     <Field Horizontal="true">
