@@ -5,7 +5,6 @@ using ProjectManagementSystem.Features.Issues.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Security.Cryptography;
 using System.Threading.Tasks;
 
 namespace ProjectManagementSystem.Features.Issues
@@ -50,13 +49,13 @@ namespace ProjectManagementSystem.Features.Issues
             return issueModel;
         }
         
-        public async Task<List<Issue>> GetIssueById(Guid Id){
-            var issueModel = await(
+        public async Task<IssueModel> GetIssueById(Guid Id){
+            var issue_Model = await(
                 from issue in this.db.Issue
                 where issue.Id == Id
-                select new IssueModel { Issue = issue}
+                select new IssueModel {Issue = issue}
                 ).FirstOrDefaultAsync();
-            return issueModel;
+            return issue_Model;
         }
         
         public int SaveIssue(Issue issueData){
