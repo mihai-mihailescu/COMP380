@@ -30,7 +30,7 @@
         {
             issue = await IssueService.GetIssueById(IssueId);
         }
-        issueTempList = await IssueService.GetIssuesAsync();
+        issueTempList = await IssueService.GetIssuesDataAsync();
         CreateTempIssueLists();
     }
 
