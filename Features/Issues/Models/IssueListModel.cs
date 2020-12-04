@@ -2,13 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using System.Collections.ObjectModel;
 
 namespace ProjectManagementSystem.Features.Issues.Models
 {
     public class IssueListModel
     {
-        public Guid Id { get; set; }
+        public Guid IssueId { get; set; }
         public string Name { get; set; }
         public string ActionItemName { get; set; }
         public string DecisionName { get; set; }
