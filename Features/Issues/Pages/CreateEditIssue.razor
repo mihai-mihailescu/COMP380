@@ -12,18 +12,18 @@
 @inject ApplicationDbContext db
 
 @code{
-    [Parameter]
-    public Guid IssueId { get; set; } //The Id retrieved when Issue is clicked on
+        [Parameter]
+        public Guid IssueId { get; set; } //The Id retrieved when Issue is clicked on
 
-    Issue issue = new Issue(); //Associated Issues
-    TaskModel taskModel = new TaskModel();
-    IssueModel issueModel = new IssueModel(); //retrieves issueModel to have list of Items, Action-Items, and Decisions
-    List<Issues.Issue> issues = new List<Issues.Issue>(); //Associated Issues
-    List<Issue> issueTempList = new List<Issue>(); //Unassociated Issues
+        Issue issue = new Issue(); //Associated Issues
+        TaskModel taskModel = new TaskModel();
+        IssueModel issueModel = new IssueModel(); //retrieves issueModel to have list of Items, Action-Items, and Decisions
+        List<Issues.Issue> issues = new List<Issues.Issue>(); //Associated Issues
+        List<Issue> issueTempList = new List<Issue>(); //Unassociated Issues
 
-    Guid Id;
+        Guid Id;
 
-    bool success;
+        bool success;
 
     protected override async System.Threading.Tasks.Task OnInitializedAsync()
     {
@@ -125,45 +125,45 @@
     private void OnExpectedCompletionDateChange(DateTime? expectedDate)
     {
         //// Update duration on expected end date change
-        //taskModel.Task.ExpectedEndDate = endDate;
-        //if (taskModel.Task.ExpectedStartDate != null)
-        //{
-        //    var expectedTimeDifference = taskModel.Task.ExpectedEndDate.Value - taskModel.Task.ExpectedStartDate.Value;
-        //    if ((int)expectedTimeDifference.TotalDays != 1)
-        //    {
-        //        taskModel.Task.ExpectedDuration = ((int)expectedTimeDifference.TotalDays).ToString() + " days";
-        //    }
-        //    else
-        //    {
-        //        taskModel.Task.ExpectedDuration = ((int)expectedTimeDifference.TotalDays).ToString() + " day";
-        //    }
-        //}
-        //else
-        //{
-        //    taskModel.Task.ExpectedDuration = "0 days";
-        //}
+        issueModel.Issue.DateAssigned = expectedDate;
+        if (issueModel.Issue.ExpectedCompletionDate != null)
+        {
+            var expectedTimeDifference = issueModel.Issue.ExpectedCompletionDate.Value - issueModel.Issue.DateAssigned.Value;
+            if ((int)expectedTimeDifference.TotalDays != 1)
+            {
+                taskModel.Task.ExpectedDuration = ((int)expectedTimeDifference.TotalDays).ToString() + " days";
+            }
+            else
+            {
+                taskModel.Task.ExpectedDuration = ((int)expectedTimeDifference.TotalDays).ToString() + " day";
+            }
+        }
+        else
+        {
+            taskModel.Task.ExpectedDuration = "0 days";
+        }
     }
 
     private void OnActualCompletionDateChange(DateTime? actualDate)
     {
         //// Update duration on actual end date change
-        //taskModel.Task.ActualEndDate = endDate;
-        //if (taskModel.Task.ActualStartDate != null)
-        //{
-        //    var actualTimeDifference = taskModel.Task.ActualEndDate.Value - taskModel.Task.ActualStartDate.Value;
-        //    if ((int)actualTimeDifference.TotalDays != 1)
-        //    {
-        //        taskModel.Task.ActualDuration = ((int)actualTimeDifference.TotalDays).ToString() + " days";
-        //    }
-        //    else
-        //    {
-        //        taskModel.Task.ActualDuration = ((int)actualTimeDifference.TotalDays).ToString() + " day";
-        //    }
-        //}
-        //else
-        //{
-        //    taskModel.Task.ActualDuration = "0 days";
-        //}
+        issueModel.Issue.DateAssigned = actualDate;
+        if (issueModel.Issue.ActualCompletionDate != null)
+        {
+            var actualTimeDifference = issueModel.Issue.ActualCompletionDate.Value - issueModel.Issue.DateAssigned.Value;
+            if ((int)actualTimeDifference.TotalDays != 1)
+            {
+                taskModel.Task.ActualDuration = ((int)actualTimeDifference.TotalDays).ToString() + " days";
+            }
+            else
+            {
+                taskModel.Task.ActualDuration = ((int)actualTimeDifference.TotalDays).ToString() + " day";
+            }
+        }
+        else
+        {
+            taskModel.Task.ActualDuration = "0 days";
+        }
     }
 }
 
@@ -223,7 +223,7 @@
     <Field Horizontal="true">
         <FieldLabel ColumnSize="ColumnSize.Is2">Expected Completion Date</FieldLabel>
         <FieldBody ColumnSize="ColumnSize.IsAuto">
-            <DateEdit TValue="DateTime?" @bind-Date="@issueModel.Issue.ExpectedCompletionDate"/>
+            <DateEdit TValue="DateTime?" Date="@issueModel.Issue.ExpectedCompletionDate" DateChanged="OnExpectedCompletionDateChange" />
         </FieldBody>
     </Field>
     <Field Horizontal="true">
