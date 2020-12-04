@@ -1,5 +1,6 @@
 @page "/issues/{IssueId:guid}"
 @page "/issues/create"
+@using ProjectManagementSystem.Features.Issues 
 @using ProjectManagementSystem.Features.Issues.Models
 @using ProjectManagementSystem.Features.Tasks.Models
 @using ProjectManagementSystem.Features.ActionItems
@@ -12,26 +13,24 @@
 @inject ApplicationDbContext db
 
 @code{
-        [Parameter]
-        public Guid IssueId { get; set; } //The Id retrieved when Issue is clicked on
+    [Parameter]
+    public Guid IssueId { get; set; }
 
-        Issue issue = new Issue(); //Associated Issues
-        TaskModel taskModel = new TaskModel();
-        IssueModel issueModel = new IssueModel(); //retrieves issueModel to have list of Items, Action-Items, and Decisions
-        List<Issues.Issue> issues = new List<Issues.Issue>(); //Associated Issues
-        List<Issue> issueTempList = new List<Issue>(); //Unassociated Issues
-
-        Guid Id;
-
-        bool success;
+    IssueModel issueModel = new IssueModel();
+    Issue issue = new Issue();
+    TaskModel taskModel = new TaskModel();
+    List<Issue> issues = new List<Issue>();
+    List<Issue> issueTempList = new List<Issue>();
+    Guid issueId;
+    bool success;
 
     protected override async System.Threading.Tasks.Task OnInitializedAsync()
     {
-        if (Id != Guid.Empty)
+        if (IssueId != Guid.Empty)
         {
-            issueModel = await IssueService.GetIssueById(Id);
+            issue = await IssueService.GetIssueById(IssueId);
         }
-        issueTempList = await IssueService.GetIssuesDataAsync();
+        issueTempList = await IssueService.GetIssuesAsync();
         CreateTempIssueLists();
     }
 
@@ -42,11 +41,14 @@
         n.Status = string.IsNullOrEmpty(name) ? ValidationStatus.None : ValidationStatus.Success;
     }
 
+    //Assign issues to a temp list
     private void CreateTempIssueLists()
     {
+        //creates temp list for those issues
         for (var i = 0; i < issues.Count; i++)
         {
             TaskIssue associatedIssue = new TaskIssue();
+
             if (i < issueModel.Issue.TaskIssue.Count)
             {
                 associatedIssue = issueModel.Issue.TaskIssue[i];
@@ -68,7 +70,7 @@
         {
             return;
         }
-        else if (Id != Guid.Empty)
+        else if (IssueId != Guid.Empty)
         {
             // Save edited changes
             entriesSaved = db.SaveChanges();
@@ -88,22 +90,22 @@
     private void OnAddIssueClick()
     {
         // We do not want to add an empty guid
-        if(Id == Guid.Empty)
+        if(issueId == Guid.Empty)
         {
             return;
         }
 
         //Get issue from temp list
-        var issue = issueTempList.Find(x => x.Id == Id);
+        var issue = issueTempList.Find(x => x.Id == issueId);
 
         // Add the TaskIssue data to our Task.TaskIssue list
-        taskModel.Task.TaskIssue.Add(new TaskIssue { TaskId = taskModel.Task.Id, Task = taskModel.Task, IssueId = Id, Issue = issue });
+        taskModel.Task.TaskIssue.Add(new TaskIssue { TaskId = taskModel.Task.Id, Task = taskModel.Task, IssueId = issueId, Issue = issue });
 
         // Remove the issue from our temp list because we don't want the user to add it again
         issueTempList.Remove(issue);
 
         // Set the issueId to empty so we display Select...
-        Id = Guid.Empty;
+        issueId = Guid.Empty;
     }
 
     private void OnRemoveIssuesClick()
@@ -253,10 +255,10 @@
     <Field Horizontal="true">
         <FieldLabel ColumnSize="ColumnSize.Is2">Issues</FieldLabel>
         <FieldBody ColumnSize="ColumnSize.Is3">
-            <Select TValue="Guid" @bind-SelectedValue="@Id">
-                @if (Id == Guid.Empty)
+            <Select TValue="Guid" @bind-SelectedValue="@issueId">
+                @if (issueId == Guid.Empty)
                 {
-                    <SelectItem Value="@Id">Select...</SelectItem>
+                    <SelectItem Value="@issueId">Select...</SelectItem>
                 }
                 @foreach (var issue in issueTempList)
                 {
@@ -269,7 +271,7 @@
     <Field Horizontal="true">
         <FieldLabel ColumnSize="ColumnSize.Is2"></FieldLabel>
         <FieldBody ColumnSize="ColumnSize.Is3">
-            <Select Multiple="true" TValue="Guid" @bind-SelectedValue="@Id">
+            <Select Multiple="true" TValue="Guid" @bind-SelectedValue="@issueId">
                 @foreach (var item in taskModel.Task.TaskIssue)
                 {
                     <SelectItem Value="@item.IssueId">@item.Issue.Name</SelectItem>
@@ -293,3 +295,4 @@
         }
     </div>
 </div>
+
