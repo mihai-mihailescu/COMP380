@@ -18,7 +18,7 @@ namespace ProjectManagementSystem.Features.Issues
             this.db = db;
         }
 
-        public async Task<List<Issue>> GetIssuesAsync()
+        public async Task<List<Issue>> GetIssuesDataAsync()
         {
             var issues = await (from issue in this.db.Issue
                                 select issue).ToListAsync();
