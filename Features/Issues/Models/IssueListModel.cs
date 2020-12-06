@@ -18,8 +18,10 @@ namespace ProjectManagementSystem.Features.Issues.Models
         public DateTime? DateAssigned { get; set; }
         public DateTime? ExpectedCompletionDate { get; set; }
         public DateTime? ActualCompletionDate { get; set; }
-        public Status Status { get; set; }
+        public IssueStatus Status { get; set; }
         public string StatusDescription { get; set; }
         public DateTime UpdateDate { get; set; }
+    
     }
 }
+
