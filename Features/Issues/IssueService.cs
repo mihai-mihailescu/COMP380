@@ -43,7 +43,7 @@ namespace ProjectManagementSystem.Features.Issues
                                            ActualCompletionDate = issue.ActualCompletionDate,
                                            Status = issue.Status,
                                            StatusDescription = issue.StatusDescription,
-                                           UpdateDate = issue.UpdateDate,
+                                           //UpdateDate = issue.UpdateDate,
                                        }).ToListAsync();
             return issueListData;
         }
@@ -55,7 +55,7 @@ namespace ProjectManagementSystem.Features.Issues
             return issueData;
         }
          
-        public int SaveIssue(Issue issueData){
+        public async Task<int> SaveIssue(Issue issueData){
             int entriesSaved = 0;
             
             var issue = new Issue()
