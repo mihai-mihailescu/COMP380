@@ -1,6 +1,6 @@
 @page "/issues/{IssueId:guid}"
 @page "/issues/create"
-@using ProjectManagementSystem.Features.Issues 
+@using ProjectManagementSystem.Features.Issues
 @using ProjectManagementSystem.Features.Issues.Models
 @using ProjectManagementSystem.Features.Tasks.Models
 @*@using ProjectManagementSystem.Features.ActionItems*@
@@ -9,7 +9,7 @@
 @using ProjectManagementSystem.Data
 @using ProjectManagementSystem.Features.Shared
 @inject IssueService IssueService
-@*@inject ActionItemService ActionItemService *@
+@*@inject ActionItemService ActionItemService*@
 @inject TaskService TaskService
 @inject NavigationManager navigation
 @inject ApplicationDbContext db
@@ -20,14 +20,15 @@
 
     IssueModel issueModel = new IssueModel();
     Issue issue = new Issue();
-    //ActionItem actionItem = new ActionItem();
-    //Decision decision = new Decision();
     TaskModel taskModel = new TaskModel();
     List<Issue> issues = new List<Issue>();
     List<Issue> issueTempList = new List<Issue>();
-    //List<ActionItem> actionItems = new List<ActionItem>();
+    //List<ActionItem> actionItemTempList = new List<ActionItem>();
+    //List<Decision> decisionTempList = new List<Decision>();
+
     Guid issueId;
-    //Guid actionItemId;
+    Guid actionId;
+    Guid decisionId;
     bool success;
 
     protected override async System.Threading.Tasks.Task OnInitializedAsync()
@@ -37,8 +38,6 @@
             issue = await IssueService.GetIssueById(IssueId);
         }
         issueTempList = await IssueService.GetIssuesDataAsync();
-        //actionItems = await ActionItemService.GetActionItemAsync();
-        //decisions = await DecisionService.GetDecisionAsync();
         CreateTempIssueLists();
     }
 
@@ -69,6 +68,44 @@
         }
     }
 
+    /*private void CreateTempActionItemList()
+    {
+        //creates temp list for those action items
+        for(var i = 0; i < actionItems.Count; i++){
+            TaskIssue associatedAction = new TaskIssue();
+
+            if(i < actionModel.ActionItem.TaskIssue.Count)
+            {
+                associatedAction = actionItem.ActionItem.TaskIssue[i];
+            }
+            if(actionItems[i].Id != associatedAction?.ActionId)
+            {
+                actionTempList.Add(issues[i]);
+            }
+        }
+    }
+    */
+
+    /*private void CreateTempDecisionList()
+    {
+        //creates temp list for those action items
+        for(var i = 0; i < decision.Count; i++){
+            TaskIssue decision = new TaskIssue();
+
+            if(i < decision.Decision.TaskIssue.Count)
+            {
+                associatedDecision = decision.Decision.TaskIssue[i];
+            }
+            if(decision[i].Id != associatedDecision?.DecisionId)
+            {
+                decisionTempList.Add(issues[i]);
+            }
+        }
+    }
+    */
+
+
+
     private void Save()
     {
         int entriesSaved = 0;
@@ -98,7 +135,7 @@
     private void OnAddIssueClick()
     {
         // We do not want to add an empty guid
-        if(issueId == Guid.Empty)
+        if (issueId == Guid.Empty)
         {
             return;
         }
@@ -131,50 +168,6 @@
     {
         navigation.NavigateTo("/issues");
     }
-
-    /*private void OnExpectedCompletionDateChange(DateTime? expectedDate)
-    {
-        //// Update duration on expected end date change
-        issueModel.Issue.DateAssigned = expectedDate;
-        if (issueModel.Issue.ExpectedCompletionDate != null)
-        {
-            var expectedTimeDifference = issueModel.Issue.ExpectedCompletionDate.Value - issueModel.Issue.DateAssigned.Value;
-            if ((int)expectedTimeDifference.TotalDays != 1)
-            {
-                taskModel.Task.ExpectedDuration = ((int)expectedTimeDifference.TotalDays).ToString() + " days";
-            }
-            else
-            {
-                taskModel.Task.ExpectedDuration = ((int)expectedTimeDifference.TotalDays).ToString() + " day";
-            }
-        }
-        else
-        {
-            taskModel.Task.ExpectedDuration = "0 days";
-        }
-    }
-
-    private void OnActualCompletionDateChange(DateTime? actualDate)
-    {
-        //// Update duration on actual end date change
-        issueModel.Issue.DateAssigned = actualDate;
-        if (issueModel.Issue.ActualCompletionDate != null)
-        {
-            var actualTimeDifference = issueModel.Issue.ActualCompletionDate.Value - issueModel.Issue.DateAssigned.Value;
-            if ((int)actualTimeDifference.TotalDays != 1)
-            {
-                taskModel.Task.ActualDuration = ((int)actualTimeDifference.TotalDays).ToString() + " days";
-            }
-            else
-            {
-                taskModel.Task.ActualDuration = ((int)actualTimeDifference.TotalDays).ToString() + " day";
-            }
-        }
-        else
-        {
-            taskModel.Task.ActualDuration = "0 days";
-        }
-    }*/
 }
 
 <div class="container-fluid">
@@ -321,37 +314,34 @@
         </FieldBody>
     </Field>
 
-    @* <Field Horizontal="true">
-            <FieldLabel ColumnSize="ColumnSize.Is2">Action Item Assigned</FieldLabel>
-            <FieldBody ColumnSize="ColumnSize.Is2">
-                <Select TValue="Guid" @bind-SelectedValue="@actionItemModel.ActionItem.Id">
-                    @if (actionItemModel.ActionItem.Id == null)
-                    {
-                        <SelectItem Value="actionItemModel.ActionItem.Id">Select...</SelectItem>
-                    }
-                    @foreach (var action in actionItems)
-                    {
-                        <SelectItem Value="actionItem.Id">@actionItem.Name</SelectItem>
-                    }
-                </Select>
-            </FieldBody>
-             </Field>
-            <Field Horizontal="true">
-                <FieldLabel ColumnSize="ColumnSize.Is2">Decision Reached</FieldLabel>
-                <FieldBody ColumnSize="ColumnSize.Is3">
-                    <Select TValue="Guid" @bind-SelectedValue="@decisionModel.Decision.DecisionId">
-                        @if (decisionModel.Decision.DecisionId == null)
-                        {
-                            <SelectItem Value="decision.Decision.DecisionId">Select...</SelectItem>
-                        }
-                        @foreach (var action in actionItems)
-                        {
-                            <SelectItem Value="decision.Id">@DecisionId.Name</SelectItem>
-                        }
-                        </Select>
-                </FieldBody>
-            </Field>
-        </Field>*@
+    <Field Horizontal="true">
+        <FieldLabel ColumnSize="ColumnSize.Is2">Action Items</FieldLabel>
+        <FieldBody ColumnSize="ColumnSize.Is3">
+            <Select TValue="Guid" @bind-SelectedValue="@actionId">
+                @if (actionId == Guid.Empty)
+                {
+                    <SelectItem Value="@issueId">Action Item 1</SelectItem>
+                }
+            
+            </Select>
+        </FieldBody>
+        <Button Color="Color.Primary" Clicked="OnAddIssueClick">Add</Button>
+    </Field>
+
+    <Field Horizontal="true">
+        <FieldLabel ColumnSize="ColumnSize.Is2">Decisions</FieldLabel>
+        <FieldBody ColumnSize="ColumnSize.Is3">
+            <Select TValue="Guid" @bind-SelectedValue="@decisionId">
+                @if (decisionId == Guid.Empty)
+                {
+                    <SelectItem Value="@decisionId">Decision 1</SelectItem>
+                }
+              
+            </Select>
+        </FieldBody>
+        <Button Color="Color.Primary" Clicked="OnAddIssueClick">Add</Button>
+    </Field>
+
     <Field Horizontal="true">
         <FieldLabel ColumnSize="ColumnSize.Is2">Issues</FieldLabel>
         <FieldBody ColumnSize="ColumnSize.Is3">
@@ -395,6 +385,7 @@
         }
     </div>
 </div>
+
 
 
 
