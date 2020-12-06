@@ -55,9 +55,10 @@ namespace ProjectManagementSystem.Features.Issues
             return issueData;
         }
          
-        public async Task<int> SaveIssue(Issue issueData){
+         public int SaveIssue(Issue issueData)
+        {
             int entriesSaved = 0;
-            
+
             var issue = new Issue()
             {
                 Name = issueData.Name,
@@ -77,11 +78,11 @@ namespace ProjectManagementSystem.Features.Issues
                 this.db.Add(issue);
                 entriesSaved = this.db.SaveChanges();
             }
-            catch(SqlException ex){
+            catch (SqlException ex)
+            {
                 Console.Write(ex.Message);
             }
             return entriesSaved;
         }
     }
 }
-
