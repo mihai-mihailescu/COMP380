@@ -43,7 +43,7 @@ namespace ProjectManagementSystem.Features.Issues
                                            ActualCompletionDate = issue.ActualCompletionDate,
                                            Status = issue.Status,
                                            StatusDescription = issue.StatusDescription,
-                                           //UpdateDate = issue.UpdateDate,
+                                           UpdateDate = issue.UpdateDate
                                        }).ToListAsync();
             return issueListData;
         }
@@ -72,7 +72,7 @@ namespace ProjectManagementSystem.Features.Issues
                 ActualCompletionDate = issueData.ActualCompletionDate,
                 Status = issueData.Status,
                 StatusDescription = issueData.StatusDescription,
-                UpdateDate = issueData.UpdateDate
+                UpdateDate = DateTime.Now
             };
             try
             {

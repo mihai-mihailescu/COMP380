@@ -10,9 +10,10 @@
 @code {
     List<IssueListModel> issueListData = new List<IssueListModel>();
     List<IssueListModel> taskListData = new List<IssueListModel>();
+    string expectedCompletionDate;
 
     protected override async System.Threading.Tasks.Task OnInitializedAsync() {
-        issueListData = await IssueService.GetIssuesListData();
+        issueListData = await IssueService.GetIssuesListData();        
     }
 
     private void OnCreateIssueClick()
