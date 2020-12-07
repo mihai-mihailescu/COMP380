@@ -49,10 +49,11 @@ namespace ProjectManagementSystem.Features.Issues
         }
         
         public async Task<Issue> GetIssueById(Guid Id){
-            var issueData = await(from issue in this.db.Issue
+            var issueModel = await (
+                from issue in this.db.Issue
                 where issue.Id == Id
                 select issue).FirstAsync();
-            return issueData;
+            return issueModel;
         }
          
          public int SaveIssue(Issue issueData)
