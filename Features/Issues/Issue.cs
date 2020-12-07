@@ -13,13 +13,13 @@ namespace ProjectManagementSystem.Features.Issues
         public string Description { get; set; }
         public Priority Priority { get; set; }
         public Severity Severity { get; set; }
-        public DateTime DateRaised { get; private set; }
+        public DateTime DateRaised { get; set; }
         public DateTime? DateAssigned { get; set; }
         public DateTime? ExpectedCompletionDate { get; set; }
         public DateTime? ActualCompletionDate { get; set; }
-        public Status Status { get; set; }
+        public IssueStatus Status { get; set; }
         public string StatusDescription { get; set; }
-        public DateTime UpdateDate { get; set; }        
+        public DateTime? UpdateDate { get; set; }        
         public Collection<TaskIssue> TaskIssue { get; set; }
 
         public Issue()
@@ -66,7 +66,7 @@ namespace ProjectManagementSystem.Features.Issues
         Critical
     }
 
-    public enum Status
+    public enum IssueStatus
     {
         Open,
         Closed,
