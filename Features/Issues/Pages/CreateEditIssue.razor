@@ -56,9 +56,9 @@
         {
             TaskIssue associatedIssue = new TaskIssue();
 
-            if (i < issueModel.Issue.TaskIssue.Count)
+            if (i < issue.TaskIssue.Count)
             {
-                associatedIssue = issueModel.Issue.TaskIssue[i];
+                associatedIssue = issue.TaskIssue[i];
             }
 
             if (issues[i].Id != associatedIssue?.IssueId)
@@ -111,7 +111,7 @@
         int entriesSaved = 0;
 
         // If the name is empty, we cannot save because it is required
-        if (string.IsNullOrEmpty(issueModel.Issue.Name))
+        if (string.IsNullOrEmpty(issue.Name))
         {
             return;
         }
@@ -123,7 +123,7 @@
         else
         {
             // Save new changes
-            entriesSaved = IssueService.SaveIssue(issueModel.Issue);
+            entriesSaved = IssueService.SaveIssue(issue);
         }
 
         if (entriesSaved > 0)
@@ -185,7 +185,7 @@
         <FieldLabel ColumnSize="ColumnSize.Is2">Name</FieldLabel>
         <FieldBody ColumnSize="ColumnSize.Is10">
             <Validation Validator="@ValidateNameExists">
-                <TextEdit @bind-Text="@issueModel.Issue.Name">
+                <TextEdit @bind-Text="@issue.Name">
                     <Feedback>
                         <ValidationNone>Name is required</ValidationNone>
                     </Feedback>
@@ -196,23 +196,23 @@
     <Field Horizontal="true">
         <FieldLabel ColumnSize="ColumnSize.Is2">Description</FieldLabel>
         <FieldBody ColumnSize="ColumnSize.Is10">
-            <TextEdit @bind-Text="@issueModel.Issue.Description" />
+            <TextEdit @bind-Text="@issue.Description" />
         </FieldBody>
     </Field>
     <Field Horizontal="true">
         <FieldLabel ColumnSize="ColumnSize.Is2">Priority</FieldLabel>
         <FieldBody ColumnSize="ColumnSize.Is2">
-            <Select TValue="Priority" @bind-SelectedValue="@issueModel.Issue.Priority">
-                <SelectItem Value=" issueModel.Issue.Priority">@issueModel.Issue.Priority</SelectItem>
-                @if (Priority.Low != issueModel.Issue.Priority)
+            <Select TValue="Priority" @bind-SelectedValue="@issue.Priority">
+                <SelectItem Value=" issue.Priority">@issue.Priority</SelectItem>
+                @if (Priority.Low != issue.Priority)
                 {
                     <SelectItem Value="Priority.Low">@Priority.Low</SelectItem>
                 }
-                @if (Priority.Medium != issueModel.Issue.Priority)
+                @if (Priority.Medium != issue.Priority)
                 {
                     <SelectItem Value="Priority.Medium">@Priority.Medium</SelectItem>
                 }
-                @if (Priority.High != issueModel.Issue.Priority)
+                @if (Priority.High != issue.Priority)
                 {
                     <SelectItem Value="Priority.High">@Priority.High</SelectItem>
                 }
@@ -222,26 +222,26 @@
     <Field Horizontal="true">
         <FieldLabel ColumnSize="ColumnSize.Is2">Severity</FieldLabel>
         <FieldBody ColumnSize="ColumnSize.Is2">
-            <Select TValue="Severity" @bind-SelectedValue="@issueModel.Issue.Severity">
-                <SelectItem Value=" issueModel.Issue.Severity">@issueModel.Issue.Severity</SelectItem>
-                @if (Severity.Minor != issueModel.Issue.Severity)
+            <Select TValue="Severity" @bind-SelectedValue="@issue.Severity">
+                <SelectItem Value=" issue.Severity">@issue.Severity</SelectItem>
+                @if (Severity.Minor != issue.Severity)
                 {
                     <SelectItem Value="Severity.Minor">@Severity.Minor</SelectItem>
                 }
-                @if (Severity.Low != issueModel.Issue.Severity)
+                @if (Severity.Low != issue.Severity)
                 {
                     <SelectItem Value="Severity.Low">@Severity.Low</SelectItem>
                 }
                 }
-                @if (Severity.Medium != issueModel.Issue.Severity)
+                @if (Severity.Medium != issue.Severity)
                 {
                     <SelectItem Value="Severity.Medium">@Severity.Medium</SelectItem>
                 }
-                @if (Severity.High != issueModel.Issue.Severity)
+                @if (Severity.High != issue.Severity)
                 {
                     <SelectItem Value="Severity.High">@Severity.High</SelectItem>
                 }
-                @if (Severity.Critical != issueModel.Issue.Severity)
+                @if (Severity.Critical != issue.Severity)
                 {
                     <SelectItem Value="Severity.Critical">@Severity.Critical</SelectItem>
                 }
@@ -251,50 +251,50 @@
     <Field Horizontal="true">
         <FieldLabel ColumnSize="ColumnSize.Is2">Date Raised</FieldLabel>
         <FieldBody ColumnSize="ColumnSize.Is2">
-            <DateEdit TValue="DateTime" @bind-Date="@issueModel.Issue.DateRaised" />
+            <DateEdit TValue="DateTime" @bind-Date="@issue.DateRaised" />
         </FieldBody>
     </Field>
     <Field Horizontal="true">
         <FieldLabel ColumnSize="ColumnSize.Is2">Date Assigned</FieldLabel>
         <FieldBody ColumnSize="ColumnSize.Is2">
-            <DateEdit TValue="DateTime?" @bind-Date="@issueModel.Issue.DateAssigned" />
+            <DateEdit TValue="DateTime?" @bind-Date="@issue.DateAssigned" />
         </FieldBody>
     </Field>
     <Field Horizontal="true">
         <FieldLabel ColumnSize="ColumnSize.Is2">Expected Completion Date</FieldLabel>
         <FieldBody ColumnSize="ColumnSize.IsAuto">
-            <DateEdit TValue="DateTime?" @bind-Date="@issueModel.Issue.ExpectedCompletionDate" />
+            <DateEdit TValue="DateTime?" @bind-Date="@issue.ExpectedCompletionDate" />
         </FieldBody>
     </Field>
     <Field Horizontal="true">
         <FieldLabel ColumnSize="ColumnSize.Is2">Actual Completion Date</FieldLabel>
         <FieldBody ColumnSize="ColumnSize.IsAuto">
-            <DateEdit TValue="DateTime?" @bind-Date="@issueModel.Issue.ActualCompletionDate" />
+            <DateEdit TValue="DateTime?" @bind-Date="@issue.ActualCompletionDate" />
         </FieldBody>
     </Field>
     <Field Horizontal="true">
         <FieldLabel ColumnSize="ColumnSize.Is2">Status</FieldLabel>
         <FieldBody ColumnSize="ColumnSize.Is2">
-            <Select TValue="IssueStatus" @bind-SelectedValue="@issueModel.Issue.Status">
-                <SelectItem Value=" issueModel.Issue.Status">@issueModel.Issue.Status</SelectItem>
-                @if (IssueStatus.Open != issueModel.Issue.Status)
+            <Select TValue="IssueStatus" @bind-SelectedValue="@issue.Status">
+                <SelectItem Value=" issue.Status">@issue.Status</SelectItem>
+                @if (IssueStatus.Open != issue.Status)
                 {
                     <SelectItem Value="IssueStatus.Open">@IssueStatus.Open</SelectItem>
                 }
-                @if (IssueStatus.Closed != issueModel.Issue.Status)
+                @if (IssueStatus.Closed != issue.Status)
                 {
                     <SelectItem Value="IssueStatus.Closed">@IssueStatus.Closed</SelectItem>
                 }
                 }
-                @if (IssueStatus.InProgress != issueModel.Issue.Status)
+                @if (IssueStatus.InProgress != issue.Status)
                 {
                     <SelectItem Value="IssueStatus.InProgress">@IssueStatus.InProgress</SelectItem>
                 }
-                @if (IssueStatus.Hold != issueModel.Issue.Status)
+                @if (IssueStatus.Hold != issue.Status)
                 {
                     <SelectItem Value="IssueStatus.Hold">@IssueStatus.Hold</SelectItem>
                 }
-                @if (IssueStatus.Complete != issueModel.Issue.Status)
+                @if (IssueStatus.Complete != issue.Status)
                 {
                     <SelectItem Value="IssueStatus.Complete">@IssueStatus.Complete</SelectItem>
                 }
@@ -304,13 +304,13 @@
     <Field Horizontal="true">
         <FieldLabel ColumnSize="ColumnSize.Is2">Status Description</FieldLabel>
         <FieldBody ColumnSize="ColumnSize.Is3">
-            <TextEdit @bind-Text="@issueModel.Issue.StatusDescription" />
+            <TextEdit @bind-Text="@issue.StatusDescription" />
         </FieldBody>
     </Field>
     <Field Horizontal="true">
         <FieldLabel ColumnSize="ColumnSize.Is2">Update Date</FieldLabel>
         <FieldBody ColumnSize="ColumnSize.Is3">
-            <DateEdit TValue="DateTime?" @bind-Date="@issueModel.Issue.UpdateDate" />
+            <DateEdit TValue="DateTime?" @bind-Date="@issue.UpdateDate" />
         </FieldBody>
     </Field>
 

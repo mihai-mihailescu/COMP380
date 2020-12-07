@@ -20,7 +20,7 @@ namespace ProjectManagementSystem.Features.Issues.Models
         public DateTime? ActualCompletionDate { get; set; }
         public IssueStatus Status { get; set; }
         public string StatusDescription { get; set; }
-        public DateTime UpdateDate { get; set; }
+        public DateTime? UpdateDate { get; set; }
     
     }
 }

@@ -141,7 +141,7 @@ namespace ProjectManagementSystem.Migrations
                     b.Property<string>("StatusDescription")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateTime>("UpdateDate")
+                    b.Property<DateTime?>("UpdateDate")
                         .HasColumnType("datetime2");
 
                     b.HasKey("Id");

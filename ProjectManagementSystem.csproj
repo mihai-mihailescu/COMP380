@@ -6,19 +6,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="Data\Migrations\20201031171157_InitialCreate.cs" />
-    <Compile Remove="Data\Migrations\20201031171157_InitialCreate.Designer.cs" />
-    <Compile Remove="Data\Migrations\20201121041331_ResourceSkillTable.cs" />
-    <Compile Remove="Data\Migrations\20201121041331_ResourceSkillTable.Designer.cs" />
-    <Compile Remove="Data\Migrations\20201121041706_ResourceSkillTable.cs" />
-    <Compile Remove="Data\Migrations\20201121041706_ResourceSkillTable.Designer.cs" />
-    <Compile Remove="Data\Migrations\20201121044407_ResourceSkillTable.cs" />
-    <Compile Remove="Data\Migrations\20201121044407_ResourceSkillTable.Designer.cs" />
-    <Compile Remove="Data\Migrations\20201123022133_ResourceSkill.cs" />
-    <Compile Remove="Data\Migrations\20201123022133_ResourceSkill.Designer.cs" />
-    <Compile Remove="Data\Migrations\20201123033432_SkillResourceTaskModification.cs" />
-    <Compile Remove="Data\Migrations\20201123033432_SkillResourceTaskModification.Designer.cs" />
-    <Compile Remove="Data\Migrations\ApplicationDbContextModelSnapshot.cs" />
     <Compile Remove="Migrations\20201123035245_update.cs" />
     <Compile Remove="Migrations\20201123035245_update.Designer.cs" />
   </ItemGroup>
@@ -45,10 +32,6 @@
     </PackageReference>
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="3.1.9" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="3.1.9" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Data\Migrations\" />
   </ItemGroup>
 
 </Project>
