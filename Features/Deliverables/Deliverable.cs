@@ -13,8 +13,6 @@ namespace ProjectManagementSystem.Features.Deliverables
         public string Description { get; set; }
         public DateTime? DueDate { get; set; }
 
-        //public Collection<Tasks.Task> ListOfTasks { get; set; } = new Collection<Tasks.Task>();
-
         public Deliverable()
         {
             Id = Guid.NewGuid();

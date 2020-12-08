@@ -58,26 +58,17 @@ namespace ProjectManagementSystem.Features.Deliverables
         //    return deliverableModel;
         //}
 
-        public int SaveDeliverable(Deliverable deliverableData)
+        public int SaveDeliverable(DeliverableModel deliverableData)
         {
             int entriesSaved = 0;
-
-            var deliverable = new Deliverable()
-            {
-                Name = deliverableData.Name,
-                Description = deliverableData.Description,
-                DueDate = deliverableData.DueDate
-            };
 
             //taskData is a list of tasks.
             //each has a DeliverableId as FK
             //Have to put deliverableData.Id INTO DeliverableId for the task
 
-
-
             try
             {
-                this.db.Add(deliverable);
+                this.db.Add(deliverableData.Deliverable);
                 entriesSaved = this.db.SaveChanges();
             }
             catch (SqlException ex)

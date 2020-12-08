@@ -10,9 +10,9 @@ namespace ProjectManagementSystem.Features.Deliverables.Models
     {
         public Deliverable Deliverable { get; set; } = new Deliverable();
 
-        public Collection<Tasks.Task> AssociatedTasks { get; set; } = new Collection<Tasks.Task>();
+        public List<Tasks.Task> AssociatedTasks { get; set; } = new List<Tasks.Task>();
 
-        public Collection<Requirements.Requirement> AssociatedRequirements { get; set; } = new Collection<Requirements.Requirement>();
+        public List<Requirements.Requirement> AssociatedRequirements { get; set; } = new List<Requirements.Requirement>();
 
     }
 }

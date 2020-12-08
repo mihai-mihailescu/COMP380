@@ -124,7 +124,11 @@ namespace ProjectManagementSystem.Data
             {
                 var deliverableToAdd = new[]
                 {
-                    new Deliverable(){Name = "Deliv 1" }
+                    new Deliverable(){Name = "Deliverable 1", Description = "Information about deliverable 1", DueDate = DateTime.Now }  ,                  
+                    new Deliverable(){Name = "Deliverable 2", Description = "Information about deliverable 2", DueDate = DateTime.Now }  ,                  
+                    new Deliverable(){Name = "Deliverable 3", Description = "Information about deliverable 2", DueDate = DateTime.Now }  
+
+
                 };
                 db.Set<Deliverable>().AddRange(deliverableToAdd);
                 db.SaveChanges();
