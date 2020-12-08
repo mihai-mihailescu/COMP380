@@ -123,10 +123,11 @@ namespace ProjectManagementSystem.Data
             {
                 var action_itemToAdd = new[]
                {
-                    new ActionItem(){ 
-                        Name = "Action Item 1"
-                    }
-            
+                    new ActionItem(){Name = "Action Item 1"},
+                    new ActionItem(){Name = "Action Item 2"},
+                    new ActionItem(){Name = "Action Item 3"},
+                    new ActionItem(){Name = "Action Item 4"}
+
                 };
                 db.Set<ActionItem>().AddRange(action_itemToAdd);
                 db.SaveChanges();
