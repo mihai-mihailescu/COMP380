@@ -11,7 +11,7 @@ namespace ProjectManagementSystem.Features.Deliverables
         public Guid Id { get; private set; }
         public string Name { get; set; }
         public string Description { get; set; }
-        public DateTime DueDate { get; set; }
+        public DateTime? DueDate { get; set; }
 
         //public Collection<Tasks.Task> ListOfTasks { get; set; } = new Collection<Tasks.Task>();
 

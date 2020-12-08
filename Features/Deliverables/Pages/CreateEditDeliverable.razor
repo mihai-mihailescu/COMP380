@@ -43,7 +43,7 @@
         tempRequirements = RequirementService.GetUnassociatedRequirementsDataAsync();
         //Create temp lists to give user options to select for multi select features
         CreateTempTaskList();
-        
+
 
         //Problems
         //New Deliv with Task doesnt work.
@@ -70,10 +70,10 @@
 
     private void CreateTempRequirementList()
     {
-        foreach (var requirement in requirements)
-        {
-            tempRequirements.Remove(requirement);
-        }
+        //foreach (var requirement in requirements)
+        //{
+        //    tempRequirements.Remove(requirement);
+        //}
 
         //foreach (var requirement in tempRequirements)
         //{
@@ -166,6 +166,11 @@
     {
         navigation.NavigateTo("/deliverables");
     }
+
+    private void OnDueDateClick(DateTime? DueDate)
+    {
+        deliverableModel.DueDate = DueDate;
+    }
 }
 
 <div class="container-fluid">
@@ -201,8 +206,8 @@
     </Field>
     <Field Horizontal="true">
         <FieldLabel ColumnSize="ColumnSize.Is2">Due Date</FieldLabel>
-        <FieldBody ColumnSize="ColumnSize.Is10">
-            <DateEdit TValue="DateTime?" @bind-Text="@deliverableModel.DueDate" />
+        <FieldBody ColumnSize="ColumnSize.IsAuto">
+            <DateEdit TValue="DateTime?" Date="@deliverableModel.DueDate" DateChanged="@OnDueDateClick" />
         </FieldBody>
     </Field>
     <Field Horizontal="true">
