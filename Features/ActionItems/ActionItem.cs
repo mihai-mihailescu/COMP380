@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using ProjectManagementSystem.Features.Issues;
 using ProjectManagementSystem.Features.Resources;
+using ProjectManagementSystem.Features.Tasks;
 using System;
 
 namespace ProjectManagementSystem.Features.ActionItems
@@ -15,7 +16,7 @@ namespace ProjectManagementSystem.Features.ActionItems
         public DateTime? DateAssigned { get; set; }        
         public DateTime? ExpectedCompletionDate { get; set; }
         public DateTime? ActualCompletionDate { get; set; }
-        public Status? status { get; set; }
+        public Status status { get; set; }
         public string statusDescription { get; set; }
         public DateTime? UpdateDate { get; set; }
         public Guid? ResourceId { get; set; }
@@ -48,7 +49,6 @@ namespace ProjectManagementSystem.Features.ActionItems
             actionItem.Property(x => x.status);
             actionItem.Property(x => x.statusDescription);
             actionItem.Property(x => x.UpdateDate);
-
             actionItem.HasOne<Resource>().WithOne().HasForeignKey<ActionItem>(x => x.ResourceId).HasConstraintName("FK_Resource_AI");
             actionItem.HasOne<Issue>().WithOne().HasForeignKey<ActionItem>(x => x.IssueId).HasConstraintName("FK_Issue");
         }

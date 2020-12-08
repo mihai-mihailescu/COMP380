@@ -18,51 +18,56 @@ namespace ProjectManagementSystem.Features.ActionItems
             this.db = db;
         }
 
-     public async Task<List<ActionItems.Models.ActionItemListModel>> GetActionItemsListDataAsync()
+     public async Task<List<ActionItemListModel>> GetActionItemsListDataAsync()
         {
+          
             var action_itemDataList = await (
-                     from action_item in this.db.ActionItem
-                     //join addResource in this.db.Resource on action_item.ResourceId equals addResource.Id
-                     //join addIssue in this.db.Issue on action_item.IssueId equals addIssue.Id
-                   // into ActionItemResourceData
-                    // from resource in ActionItemResourceData.DefaultIfEmpty()
-                     select new ActionItemListModel { 
-                         ActionItemId = action_item.Id, 
-                         ActionItemName = action_item.Name, 
-                         ExpectedCompletionDate  = action_item.ExpectedCompletionDate, 
-                         ActualCompletionDate = action_item.ActualCompletionDate, 
-                         Status = (Status)action_item,
-                         //IssueName = Issue.Name,
-                         //ResourceName = Resource.Name
-                     }
-                         ).ToListAsync();
+                from action_item in this.db.ActionItem
 
+                join addResource in this.db.Resource on action_item.ResourceId equals addResource.Id
+                into ActionItemResourceData
+                from resource in ActionItemResourceData.DefaultIfEmpty()
+
+                join addIssue in this.db.Issue on action_item.IssueId equals addIssue.Id
+                into ActionItemIssueData
+                from issue in ActionItemIssueData.DefaultIfEmpty()
+
+                select new ActionItemListModel
+                {
+                    ActionItemId = action_item.Id,
+                    ActionItemName = action_item.Name,
+                    ExpectedCompletionDate = action_item.ExpectedCompletionDate,
+                    ActualCompletionDate = action_item.ActualCompletionDate,
+                    UpdateDate = action_item.UpdateDate,
+                    Status = action_item.status,
+                    StatusDescription = action_item.statusDescription,
+                    DateAssigned = action_item.DateAssigned,
+                    DateCreated = action_item.DateCreated,
+                    IssueName = issue.Name,
+                    ResourceName =  resource.Name,
+                }
+                ).ToListAsync();
             return action_itemDataList;
         }
 
-        public async Task<ActionItemModel> GetActionItemById(Guid ActionItemId)
+        public async Task<ActionItemModel> GetActionItemById(Guid Id)
         {
             var action_itemModel = await (
                 from action_item in this.db.ActionItem
-                where action_item.Id == ActionItemId
+                where action_item.Id == Id
                 select new ActionItemModel { ActionItem = action_item }
                     ).FirstOrDefaultAsync();
 
             return action_itemModel;
         }
 
-        //public async Task<List<Task>> GetTasksDataAsync()
-        //{
-        //    var taskModel = await (
-        //        from task in this.db.Task.Include(x => x.TaskIssue).ThenInclude(x => x.Issue)
-        //        join addResource in this.db.Resource on task.ResourceId equals addResource.Id
-        //        into TaskResourceData
-        //        from resource in TaskResourceData.DefaultIfEmpty()
-        //        select task
-        //            ).ToListAsync();
+        public async Task<List<ActionItem>> GetActionItemDataAsync()
+        {
+            var action_item = await (from ActionItem in this.db.ActionItem
+                                     select ActionItem).ToListAsync();
+            return action_item;
+        }
 
-        //    return taskModel;
-        //}
 
         public int SaveActionItem(ActionItem action_itemData)
         {
@@ -76,11 +81,13 @@ namespace ProjectManagementSystem.Features.ActionItems
                 statusDescription = action_itemData.statusDescription,
                 ExpectedCompletionDate = action_itemData.ExpectedCompletionDate,
                 ActualCompletionDate = action_itemData.ActualCompletionDate,
+                DateAssigned = action_itemData.DateAssigned,
+                UpdateDate = action_itemData.UpdateDate,
+                DateCreated = action_itemData.DateCreated,
                 ResourceId = action_itemData.ResourceId,
                 IssueId = action_itemData.IssueId,
-                DateAssigned = action_itemData.DateAssigned,
-                DateCreated = action_itemData.DateCreated,
-                UpdateDate = action_itemData.UpdateDate,
+                
+                
             };
 
             try

@@ -1,0 +1,88 @@
+﻿@page "/action-items"
+@using Blazorise.DataGrid
+@using ProjectManagementSystem.Features.ActionItems
+@using ProjectManagementSystem.Features.ActionItems.Models
+@using ProjectManagementSystem.Data
+@inject ActionItemService ActionItemService
+@inject NavigationManager nav
+@inject ApplicationDbContext db
+
+
+@code {
+    List<ActionItemListModel> action_itemListModelData = new List<ActionItemListModel>();
+
+
+    protected override async System.Threading.Tasks.Task OnInitializedAsync()
+    {
+        action_itemListModelData = await ActionItemService.GetActionItemsListDataAsync();
+    }
+
+    private void OnCreateNewActionItemClick()
+    {
+        nav.NavigateTo("/action-items/create");
+    }
+
+    private void OnEditClick(Guid action_itemId)
+    {
+        nav.NavigateTo("/action-items/" + action_itemId);
+    }
+
+    private async void OnDeleteClick(Guid action_itemId)
+    {
+        var action_itemDelete = await ActionItemService.GetActionItemById(action_itemId);
+        db.Remove(action_itemDelete.ActionItem);
+        var result = await db.SaveChangesAsync();
+        if (result > 0)
+        {
+            // Need to get our new data and refresh the component since we just deleted something from the Grid
+            action_itemListModelData = action_itemListModelData.FindAll(x => x.ActionItemId != action_itemId).ToList();
+            StateHasChanged();
+        }
+    }
+
+
+    private void OnTabularViewClick()
+    {
+        nav.NavigateTo("/action-items/tabular");
+    }
+
+
+}
+
+
+@if (this.action_itemListModelData == null)
+{
+    <h1>Loading...</h1>
+}
+else if (this.action_itemListModelData.Count == 0)
+{
+    <h1>There are no Action Items</h1>
+}
+else
+{
+    <div class="container-fluid">
+        <h1>Action Items List</h1>
+        <div class="list-table">
+            <DataGrid TItem="ActionItemListModel" Data="@action_itemListModelData" Sortable="true" Filterable="true" ShowPager="true" PageSize="20" Striped="true" Borderless="true" Bordered="true" Editable="true">
+                <DataGridColumn TItem="ActionItemListModel" Field="@nameof(ActionItemListModel.ActionItemName)" Caption="Name"></DataGridColumn>
+                <DataGridColumn TItem="ActionItemListModel" Field="@nameof(ActionItemListModel.Status)" Caption="Status"></DataGridColumn>
+                <DataGridColumn TItem="ActionItemListModel" Field="@nameof(ActionItemListModel.DateAssigned)" Caption="Date Assigned"></DataGridColumn>
+                <DataGridColumn TItem="ActionItemListModel" Field="@nameof(ActionItemListModel.ResourceName)" Caption="Assigned Resource"></DataGridColumn>
+                <DataGridColumn TItem="ActionItemListModel" Field="@nameof(ActionItemListModel.IssueName)" Caption="Issue Name"></DataGridColumn>
+                <DataGridColumn TItem="ActionItemListModel" Field="@nameof(ActionItemListModel.ExpectedCompletionDate)" Caption="Expected Completion Date"></DataGridColumn>
+                <DataGridColumn TItem="ActionItemListModel" Field="@nameof(ActionItemListModel.ActualCompletionDate)" Caption="Actual Completion Date"></DataGridColumn>
+                <DataGridColumn TItem="ActionItemListModel" Field="@nameof(ActionItemListModel.UpdateDate)" Caption="Update Date"></DataGridColumn>
+
+                <DataGridCommandColumn TItem="ActionItemListModel">
+                    <NewCommandTemplate Context="task"></NewCommandTemplate>
+                    <EditCommandTemplate Context="task"><Button Color="Color.Primary" Clicked="@(e=> OnEditClick(task.Item.ActionItemId))">Edit</Button></EditCommandTemplate>
+                    <DeleteCommandTemplate Context="task"><Button Color="Color.Danger" Clicked="@(e=> OnDeleteClick(task.Item.ActionItemId))">Delete</Button></DeleteCommandTemplate>
+                </DataGridCommandColumn>
+            </DataGrid>
+        </div>
+        <div style="padding-top:1em;">
+            <Button Clicked="@OnCreateNewActionItemClick" Color="Color.Info">Create Action Item</Button>
+            <Button Clicked="@OnTabularViewClick" Color="Color.Dark" class="tabular-button">Tabular View</Button>
+        </div>
+    </div>
+}
