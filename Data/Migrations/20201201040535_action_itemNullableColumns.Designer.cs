@@ -3,15 +3,17 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using ProjectManagementSystem.Data;
 
 namespace ProjectManagementSystem.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20201201040535_action_itemNullableColumns")]
+    partial class action_itemNullableColumns
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -143,7 +145,7 @@ namespace ProjectManagementSystem.Migrations
                     b.Property<string>("StatusDescription")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateTime?>("UpdateDate")
+                    b.Property<DateTime>("UpdateDate")
                         .HasColumnType("datetime2");
 
                     b.HasKey("Id");
@@ -184,30 +186,6 @@ namespace ProjectManagementSystem.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Resource");
-                });
-
-            modelBuilder.Entity("ProjectManagementSystem.Features.Shared.ResourceSkill", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("ResourceId")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<Guid>("SkillId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<int>("SkillLevel")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id")
-                        .HasAnnotation("SqlServer:Clustered", false);
-
-                    b.HasIndex("SkillId")
-                        .IsUnique();
-
-                    b.ToTable("ResourceSkill");
                 });
 
             modelBuilder.Entity("ProjectManagementSystem.Features.Shared.TaskIssue", b =>
@@ -351,16 +329,32 @@ namespace ProjectManagementSystem.Migrations
                             b1.WithOwner()
                                 .HasForeignKey("ResourceId");
                         });
-                });
 
-            modelBuilder.Entity("ProjectManagementSystem.Features.Shared.ResourceSkill", b =>
-                {
-                    b.HasOne("ProjectManagementSystem.Features.Skills.Skill", null)
-                        .WithOne()
-                        .HasForeignKey("ProjectManagementSystem.Features.Shared.ResourceSkill", "SkillId")
-                        .HasConstraintName("FK_SkillId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                    b.OwnsMany("ProjectManagementSystem.Features.Resources.ResourceSkill", "ResourceSkill", b1 =>
+                        {
+                            b1.Property<Guid>("Id")
+                                .ValueGeneratedOnAdd()
+                                .HasColumnType("uniqueidentifier");
+
+                            b1.Property<Guid>("ResourceId")
+                                .HasColumnType("uniqueidentifier");
+
+                            b1.Property<Guid>("SkillId")
+                                .HasColumnType("uniqueidentifier");
+
+                            b1.Property<string>("SkillLevel")
+                                .IsRequired()
+                                .HasColumnType("nvarchar(max)");
+
+                            b1.HasKey("Id");
+
+                            b1.HasIndex("SkillId");
+
+                            b1.ToTable("ResourceSkill");
+
+                            b1.WithOwner()
+                                .HasForeignKey("SkillId");
+                        });
                 });
 
             modelBuilder.Entity("ProjectManagementSystem.Features.Shared.TaskIssue", b =>

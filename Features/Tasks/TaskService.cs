@@ -25,7 +25,12 @@ namespace ProjectManagementSystem.Features.Tasks
                 join addResource in this.db.Resource on task.ResourceId equals addResource.Id
                 into TaskResourceData
                 from resource in TaskResourceData.DefaultIfEmpty()
-                select new TaskListModel { TaskId = task.Id, TaskName = task.Name, ExpectedStartDate = task.ExpectedStartDate, ExpectedEndDate = task.ExpectedEndDate, TaskType = task.TaskType, ResourceName = resource.Name }
+                select new TaskListModel { TaskId = task.Id, 
+                    TaskName = task.Name, 
+                    ExpectedStartDate = task.ExpectedStartDate, 
+                    ExpectedEndDate = task.ExpectedEndDate, 
+                    TaskType = task.TaskType, 
+                    ResourceName = resource.Name }
                     ).ToListAsync();
 
             return taskDataList;
