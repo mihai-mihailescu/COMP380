@@ -48,9 +48,7 @@
         resource = await ResourceService.GetResourcesAsync();
         issues = await IssueService.GetIssuesDataAsync();
 
-        //Create temp lists to give user options to select for multi select features
-        CreateTempActionItemLists();
-
+      
     }
 
     private void ValidateNameExists(ValidatorEventArgs n)
@@ -60,21 +58,7 @@
         n.Status = string.IsNullOrEmpty(name) ? ValidationStatus.None : ValidationStatus.Success;
     }
 
-    private void CreateTempActionItemLists()
-    {
-        //create ActionItem temp list
 
-        for (var i = 0; i < ActionItem.Count; i++)
-        {
-         
-            
-
-
-
-        }
-
-       
-    }
 
     private void Save()
     {
