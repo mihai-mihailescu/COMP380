@@ -72,7 +72,6 @@ else
                 <DataGridColumn TItem="ActionItemListModel" Field="@nameof(ActionItemListModel.ExpectedCompletionDate)" Caption="Expected Completion Date"></DataGridColumn>
                 <DataGridColumn TItem="ActionItemListModel" Field="@nameof(ActionItemListModel.ActualCompletionDate)" Caption="Actual Completion Date"></DataGridColumn>
                 <DataGridColumn TItem="ActionItemListModel" Field="@nameof(ActionItemListModel.UpdateDate)" Caption="Update Date"></DataGridColumn>
-
                 <DataGridCommandColumn TItem="ActionItemListModel">
                     <NewCommandTemplate Context="task"></NewCommandTemplate>
                     <EditCommandTemplate Context="task"><Button Color="Color.Primary" Clicked="@(e=> OnEditClick(task.Item.ActionItemId))">Edit</Button></EditCommandTemplate>
@@ -80,9 +79,12 @@ else
                 </DataGridCommandColumn>
             </DataGrid>
         </div>
-        <div style="padding-top:1em;">
-            <Button Clicked="@OnCreateNewActionItemClick" Color="Color.Info">Create Action Item</Button>
-            <Button Clicked="@OnTabularViewClick" Color="Color.Dark" class="tabular-button">Tabular View</Button>
-        </div>
+        
     </div>
 }
+
+
+<div style="padding-top:1em;">
+    <Button Clicked="@OnCreateNewActionItemClick" Color="Color.Info">Create Action Item</Button>
+    <Button Clicked="@OnTabularViewClick" Color="Color.Dark" class="tabular-button">Tabular View</Button>
+</div>
