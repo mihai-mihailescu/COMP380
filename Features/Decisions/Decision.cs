@@ -2,7 +2,7 @@
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using System;
 
-namespace ProjectManagementSystem.Features.Decision
+namespace ProjectManagementSystem.Features.Decisions
 {
     public class Decision
     {
