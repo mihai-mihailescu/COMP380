@@ -3,13 +3,13 @@
 @using ProjectManagementSystem.Features.Issues
 @using ProjectManagementSystem.Features.Issues.Models
 @using ProjectManagementSystem.Features.Tasks.Models
-@*@using ProjectManagementSystem.Features.ActionItems*@
-@*@using ProjectManagementSystem.Features.Decision*@
+@using ProjectManagementSystem.Features.ActionItems
+@using ProjectManagementSystem.Features.Decisions
 @using ProjectManagementSystem.Features.Tasks
 @using ProjectManagementSystem.Data
 @using ProjectManagementSystem.Features.Shared
 @inject IssueService IssueService
-@*@inject ActionItemService ActionItemService*@
+@inject ActionItemService ActionItemService
 @inject TaskService TaskService
 @inject NavigationManager navigation
 @inject ApplicationDbContext db
@@ -23,8 +23,8 @@
     TaskModel taskModel = new TaskModel();
     List<Issue> issues = new List<Issue>();
     List<Issue> issueTempList = new List<Issue>();
-    //List<ActionItem> actionItemTempList = new List<ActionItem>();
-    //List<Decision> decisionTempList = new List<Decision>();
+    List<ActionItem> actionItemTempList = new List<ActionItem>();
+    List<Decision> decisionTempList = new List<Decision>();
 
     Guid issueId;
     Guid actionId;
@@ -167,6 +167,26 @@
     private void ClickBack()
     {
         navigation.NavigateTo("/issues");
+    }
+
+    private void OnAddActionItemClick()
+    {
+
+    }
+
+    private void OnRemoveActionItemsClick()
+    {
+
+    }
+
+    private void OnAddDecisionClick()
+    {
+
+    }
+
+    private void OnRemoveDecisonsClick()
+    {
+
     }
 }
 
@@ -320,47 +340,20 @@
             <Select TValue="Guid" @bind-SelectedValue="@actionId">
                 @if (actionId == Guid.Empty)
                 {
-                    <SelectItem Value="@issueId">Action Item 1</SelectItem>
+                    <SelectItem Value="@actionId">Select...</SelectItem>
                 }
-                </Select>
-        </FieldBody>
-        <Button Color="Color.Primary" Clicked="OnAddIssueClick">Add</Button>
-    </Field>
-
-    <Field Horizontal="true">
-        <FieldLabel ColumnSize="ColumnSize.Is2">Decisions</FieldLabel>
-        <FieldBody ColumnSize="ColumnSize.Is3">
-            <Select TValue="Guid" @bind-SelectedValue="@decisionId">
-                @if (decisionId == Guid.Empty)
+                @foreach (var actionItem in actionItemTempList)
                 {
-                    <SelectItem Value="@decisionId">Decision 1</SelectItem>
+                    <SelectItem Value="actionItem.Id">@actionItem.Name</SelectItem>
                 }
             </Select>
         </FieldBody>
-     
-        <Button Color="Color.Primary" Clicked="OnAddIssueClick">Add</Button>
-    </Field>
-
-    <Field Horizontal="true">
-        <FieldLabel ColumnSize="ColumnSize.Is2">Issues</FieldLabel>
-        <FieldBody ColumnSize="ColumnSize.Is3">
-            <Select TValue="Guid" @bind-SelectedValue="@issueId">
-                @if (issueId == Guid.Empty)
-                {
-                    <SelectItem Value="@issueId">Select...</SelectItem>
-                }
-                @foreach (var issue in issueTempList)
-                {
-                    <SelectItem Value="issue.Id">@issue.Name</SelectItem>
-                }
-            </Select>
-        </FieldBody>
-        <Button Color="Color.Primary" Clicked="OnAddIssueClick">Add</Button>
+        <Button Color="Color.Primary" Clicked="OnAddActionItemClick">Add</Button>
     </Field>
     <Field Horizontal="true">
         <FieldLabel ColumnSize="ColumnSize.Is2"></FieldLabel>
         <FieldBody ColumnSize="ColumnSize.Is3">
-            <Select Multiple="true" TValue="Guid" @bind-SelectedValue="@issueId">
+            <Select Multiple="true" TValue="Guid" @bind-SelectedValue="@decisionId">
                 @foreach (var item in taskModel.Task.TaskIssue)
                 {
                     <SelectItem Value="@item.IssueId">@item.Issue.Name</SelectItem>
@@ -368,7 +361,37 @@
             </Select>
         </FieldBody>
         <div>
-            <Button Color="Color.Danger" Clicked="OnRemoveIssuesClick">Remove All</Button>
+            <Button Color="Color.Danger" Clicked="OnRemoveActionItemsClick">Remove All</Button>
+        </div>
+    </Field>
+    <Field Horizontal="true">
+        <FieldLabel ColumnSize="ColumnSize.Is2">Decisions</FieldLabel>
+        <FieldBody ColumnSize="ColumnSize.Is3">
+            <Select TValue="Guid" @bind-SelectedValue="@decisionId">
+                @if (decisionId == Guid.Empty)
+                {
+                    <SelectItem Value="@decisionId">Select...</SelectItem>
+                }
+                @foreach (var decision in decisionTempList)
+                {
+                    <SelectItem Value="decision.Id">@decision.Name</SelectItem>
+                }
+            </Select>
+        </FieldBody>
+        <Button Color="Color.Primary" Clicked="OnAddDecisionClick">Add</Button>
+    </Field>
+    <Field Horizontal="true">
+        <FieldLabel ColumnSize="ColumnSize.Is2"></FieldLabel>
+        <FieldBody ColumnSize="ColumnSize.Is3">
+            <Select Multiple="true" TValue="Guid" @bind-SelectedValue="@decisionId">
+                @foreach (var item in taskModel.Task.TaskIssue)
+                {
+                    <SelectItem Value="@item.IssueId">@item.Issue.Name</SelectItem>
+                }
+            </Select>
+        </FieldBody>
+        <div>
+            <Button Color="Color.Danger" Clicked="OnRemoveDecisonsClick">Remove All</Button>
         </div>
     </Field>
 </div>
