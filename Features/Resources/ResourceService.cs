@@ -57,8 +57,7 @@ namespace ProjectManagementSystem.Features.Resources
         public int SaveResource(Resource resourceData, List<ResourceSkill> resourceSkills)
         {
             int entriesSaved = 0;
-            ResourceSkill resourceSkill = new ResourceSkill();
-
+            
             var resource = new Resource()
             {
                 Name = resourceData.Name,
@@ -67,7 +66,9 @@ namespace ProjectManagementSystem.Features.Resources
                 AvailabilityCalendar = resourceData.AvailabilityCalendar                
             };
 
-            foreach(var rs in resourceSkills)
+            ResourceSkill resourceSkill = new ResourceSkill();
+
+            foreach (var rs in resourceSkills)
             {
                 resourceSkill = new ResourceSkill()
                 {
@@ -80,7 +81,11 @@ namespace ProjectManagementSystem.Features.Resources
             try
             {
                 this.db.Add(resource);
-                this.db.Add(resourceSkill);
+                if(resourceSkills.Count > 0)
+                {
+                    this.db.Add(resourceSkill);
+                }
+                
                 entriesSaved = this.db.SaveChanges();
             }
             catch (SqlException ex)
