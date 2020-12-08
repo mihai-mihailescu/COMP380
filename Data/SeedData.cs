@@ -4,6 +4,7 @@ using ProjectManagementSystem.Features.Resources;
 using ProjectManagementSystem.Features.Shared;
 using ProjectManagementSystem.Features.Skills;
 using ProjectManagementSystem.Features.Tasks;
+using ProjectManagementSystem.Features.Requirements;
 using System;
 using System.Linq;
 
@@ -18,6 +19,7 @@ namespace ProjectManagementSystem.Data
             SeedIssues(db);                    
             SeedDeliverables(db);
             SeedSkills(db);
+            SeedRequirements(db);
         }
 
         private static void SeedResources(ApplicationDbContext db)
@@ -125,6 +127,24 @@ namespace ProjectManagementSystem.Data
                     new Deliverable(){Name = "Deliv 1" }
                 };
                 db.Set<Deliverable>().AddRange(deliverableToAdd);
+                db.SaveChanges();
+            }
+        }
+
+        private static void SeedRequirements(ApplicationDbContext db)
+        {
+            var requirement = db.Requirement.Select(x => x.Id).ToList();
+
+            if(requirement.Count == 0)
+            {
+                var requirementToAdd = new[]
+                {
+                    new Requirement(){Name = "Requirement 1" },
+                    new Requirement(){Name = "Requirement 2" },
+                    new Requirement(){Name = "Requirement 3" },
+                    new Requirement(){Name = "Requirement 4" },
+                };
+                db.Set<Requirement>().AddRange(requirementToAdd);
                 db.SaveChanges();
             }
         }

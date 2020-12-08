@@ -8,6 +8,8 @@
   <ItemGroup>
     <Compile Remove="Migrations\20201123035245_update.cs" />
     <Compile Remove="Migrations\20201123035245_update.Designer.cs" />
+    <Compile Remove="Migrations\20201208020148_AddedRequirementDeliverableFK.cs" />
+    <Compile Remove="Migrations\20201208020148_AddedRequirementDeliverableFK.Designer.cs" />
   </ItemGroup>
 
 

@@ -45,6 +45,17 @@ namespace ProjectManagementSystem.Features.Tasks
             return taskModel;
         }
 
+        public async Task<List<Tasks.Task>> GetTaskByDeliverableId(Guid DeliverableId)
+        {
+            var task = await (
+                from t in this.db.Task
+                where t.DeliverableId == DeliverableId
+                select t
+                    ).ToListAsync();
+
+            return task;
+        }
+
         public async Task<List<Task>> GetTasksDataAsync()
         {
             var taskModel = await (
@@ -58,6 +69,16 @@ namespace ProjectManagementSystem.Features.Tasks
             return taskModel;
         }
 
+        public async Task<List<Task>> GetUnassociatedTasksAsync()
+        {
+            var task = await (
+                from t in this.db.Task
+                where t.DeliverableId == null
+                select t
+                ).ToListAsync();
+
+            return task;
+        }
         public async Task<int> SaveTask(Task taskData)
         {
             int entriesSaved = 0;

@@ -24,7 +24,7 @@
     private async void OnDeleteClick(Guid deliverableId)
     {
         var deliverableDelete = await DeliverableService.GetDeliverableById(deliverableId); //returns deliverable model
-        db.Remove(deliverableDelete.Deliverable);
+        db.Remove(deliverableDelete);
         var result = await db.SaveChangesAsync();
         if(result > 0)
         {
@@ -50,8 +50,7 @@ else if (this.deliverableListModelData.Count == 0)
 {
     <h1>There are no tasks</h1>
 }
-else
-{
+
     <div class="container-fluid">
         <h1>Deliverables List</h1>
         <div class="list-table">
@@ -69,4 +68,3 @@ else
             <Button Clicked="@OnCreateDeliverableClick" Color="Color.Info">Create Deliverable</Button>
         </div>
     </div>
-}

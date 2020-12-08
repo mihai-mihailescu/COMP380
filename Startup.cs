@@ -13,6 +13,8 @@ using ProjectManagementSystem.Features.Issues;
 using ProjectManagementSystem.Features.Resources;
 using ProjectManagementSystem.Features.Skills;
 using ProjectManagementSystem.Features.Tasks;
+using ProjectManagementSystem.Features.Requirements;
+
 
 
 namespace ProjectManagementSystem
@@ -50,7 +52,7 @@ namespace ProjectManagementSystem
             services.AddTransient(typeof(IssueService), typeof(IssueService));
             services.AddTransient(typeof(DeliverableService), typeof(DeliverableService));
             services.AddTransient(typeof(SkillService), typeof(SkillService));
-            
+            services.AddTransient(typeof(RequirementService), typeof(RequirementService));
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

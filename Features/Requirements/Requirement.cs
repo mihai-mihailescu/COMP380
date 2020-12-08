@@ -12,6 +12,8 @@ namespace ProjectManagementSystem.Features.Requirements
         public Guid Id { get; private set; }
         public string Name { get; set; }
 
+        public Guid? DeliverableId { get; set; }
+
         public Requirement()
         {
             Id = Guid.NewGuid();
@@ -26,6 +28,7 @@ namespace ProjectManagementSystem.Features.Requirements
 
             requirement.HasKey(x => x.Id);
             requirement.Property(x => x.Name);
+            requirement.HasOne<Deliverables.Deliverable>().WithOne().HasForeignKey<Requirement>(x => x.DeliverableId);
         }
     }
 }

@@ -3,15 +3,17 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using ProjectManagementSystem.Data;
 
 namespace ProjectManagementSystem.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20201208012345_FixedDeliverableForeignKey")]
+    partial class FixedDeliverableForeignKey
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -155,17 +157,10 @@ namespace ProjectManagementSystem.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid?>("DeliverableId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.Property<string>("Name")
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("DeliverableId")
-                        .IsUnique()
-                        .HasFilter("[DeliverableId] IS NOT NULL");
 
                     b.ToTable("Requirement");
                 });
@@ -330,13 +325,6 @@ namespace ProjectManagementSystem.Migrations
                         .HasConstraintName("FK_Resource_AI")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-                });
-
-            modelBuilder.Entity("ProjectManagementSystem.Features.Requirements.Requirement", b =>
-                {
-                    b.HasOne("ProjectManagementSystem.Features.Deliverables.Deliverable", null)
-                        .WithOne()
-                        .HasForeignKey("ProjectManagementSystem.Features.Requirements.Requirement", "DeliverableId");
                 });
 
             modelBuilder.Entity("ProjectManagementSystem.Features.Resources.Resource", b =>

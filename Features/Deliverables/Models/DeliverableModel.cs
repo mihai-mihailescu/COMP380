@@ -6,5 +6,6 @@ namespace ProjectManagementSystem.Features.Deliverables.Models
     public class DeliverableModel
     {
         public Deliverable Deliverable { get; set; } = new Deliverable();
+
     }
 }

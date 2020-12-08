@@ -37,12 +37,12 @@ namespace ProjectManagementSystem.Features.Deliverables
             return deliverableDataList;
         }
 
-        public async Task<DeliverableModel> GetDeliverableById(Guid Id) //using Id from DelivModel
+        public async Task<Deliverable> GetDeliverableById(Guid Id) //using Id from DelivModel
         {
             var deliverableModel = await (
                 from deliverable in this.db.Deliverable
                 where deliverable.Id == Id
-                select new DeliverableModel { Deliverable = deliverable }
+                select deliverable
                     ).FirstOrDefaultAsync();
 
             return deliverableModel;
@@ -68,6 +68,12 @@ namespace ProjectManagementSystem.Features.Deliverables
                 Description = deliverableData.Description,
                 DueDate = deliverableData.DueDate
             };
+
+            //taskData is a list of tasks.
+            //each has a DeliverableId as FK
+            //Have to put deliverableData.Id INTO DeliverableId for the task
+
+
 
             try
             {
