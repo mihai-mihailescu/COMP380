@@ -6,10 +6,11 @@
 @inject NavigationManager nav
 @inject ApplicationDbContext db
 
-
 @code {
-    List<TaskListModel> taskListModelData = new List<TaskListModel>();
+    private Modal modalRef;
+    Guid? taskIdToBeDeleted;
 
+    List<TaskListModel> taskListModelData = new List<TaskListModel>();
 
     protected override async System.Threading.Tasks.Task OnInitializedAsync()
     {
@@ -21,17 +22,30 @@
         nav.NavigateTo("/tasks/" + taskId);
     }
 
-    private async void OnDeleteClick(Guid taskId)
+    private void OnDeleteClick(Guid taskId)
     {
-        var taskDelete = await TaskService.GetTaskById(taskId);
+        modalRef.Show();
+        taskIdToBeDeleted = taskId;
+    }
+
+    private async void ConfirmDelete()
+    {
+        var taskDelete = await TaskService.GetTaskById((Guid)taskIdToBeDeleted);
         db.Remove(taskDelete.Task);
         var result = await db.SaveChangesAsync();
-        if(result > 0)
+        if (result > 0)
         {
             // Need to get our new data and refresh the component since we just deleted something from the Grid
-            taskListModelData = taskListModelData.FindAll(x => x.TaskId != taskId).ToList();
+            taskListModelData = taskListModelData.FindAll(x => x.TaskId != taskIdToBeDeleted).ToList();
             StateHasChanged();
         }
+        modalRef.Hide();
+    }
+
+    private void CancelDelete()
+    {
+        taskIdToBeDeleted = null;
+        modalRef.Hide();
     }
 
     private void OnCreateTaskClick()
@@ -50,20 +64,36 @@
     }
 }
 
+<div class="container-fluid">
+    @if (this.taskListModelData == null)
+    {
+        <h1>Loading...</h1>
+    }
+    else if (this.taskListModelData.Count == 0)
+    {
+        <h1>There are no tasks</h1>
+    }
+    else
+    {
 
-@if (this.taskListModelData == null)
-{
-    <h1>Loading...</h1>
-}
-else if (this.taskListModelData.Count == 0)
-{
-    <h1>There are no tasks</h1>
-}
-else
-{
-    <div class="container-fluid">
         <h1>Tasks List</h1>
-        <div class="list-table">
+
+        <div class="list-table" data-backdrop="false">
+            <Modal @ref="modalRef">                
+                <ModalContent IsCentered="true">
+                    <ModalHeader>
+                        <ModalTitle>Delete Task</ModalTitle>
+                        <CloseButton Clicked="@CancelDelete" />
+                    </ModalHeader>
+                    <ModalBody>
+                        <text>Are you sure you want to delete?</text>
+                    </ModalBody>
+                    <ModalFooter>
+                        <Button Color="Color.Secondary" Clicked="@CancelDelete">Cancel</Button>
+                        <Button Color="Color.Danger" Clicked="@ConfirmDelete">Delete</Button>
+                    </ModalFooter>
+                </ModalContent>
+            </Modal>
             <DataGrid TItem="TaskListModel" Data="@taskListModelData" Sortable="true" Filterable="true" ShowPager="true" PageSize="20" Striped="true" Borderless="true" Bordered="true" Editable="true">
                 <DataGridColumn TItem="TaskListModel" Field="@nameof(TaskListModel.TaskName)" Caption="Name"></DataGridColumn>
                 <DataGridColumn TItem="TaskListModel" Field="@nameof(TaskListModel.ResourceName)" Caption="Assigned Resource"></DataGridColumn>
@@ -78,9 +108,11 @@ else
             </DataGrid>
         </div>
         <div style="padding-top:1em;">
-            <Button Clicked="@OnCreateTaskClick" Color="Color.Info">Create Task</Button>
             <Button Clicked="@OnTabularViewClick" Color="Color.Dark" class="tabular-button">Tabular View</Button>
             <Button Clicked="@OnGanttChartClick" Color="Color.Secondary" class="gantt-button">Gantt Chart</Button>
         </div>
+    }
+    <div style="padding-top:1em;">
+        <Button Clicked="@OnCreateTaskClick" Color="Color.Info">Create Task</Button>
     </div>
-}
+</div>
