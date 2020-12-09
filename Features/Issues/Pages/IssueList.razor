@@ -6,6 +6,8 @@
 @using ProjectManagementSystem.Features.Issues.Models
 @using ProjectManagementSystem.Data
 @inject IssueService IssueService
+@inject ActionItemService ActionItemService
+@inject DecisionService DecisionService
 @inject NavigationManager nav
 @inject ApplicationDbContext db
 
@@ -43,9 +45,15 @@
         db.Remove(issueDelete);
 
         IssueModel toDelete = new IssueModel();
-        //get all associated actions items and decisions
-        //set their issue id to null
-        //remove the sisue
+        toDelete.AssociatedActionItems = await ActionItemService.GetAssociatedActionItems(issueDelete);
+        toDelete.AssociatedDecision = await DecisionService.GetAssociatedDecisions(issueDelete);
+
+        foreach (var actionitem in toDelete.AssociatedActionItems)
+            actionitem.IssueId = null;
+        foreach (var decision in toDelete.AssociatedDecision)
+            decision.IssueId = null;
+
+        db.Remove(issueDelete);
         var result = await db.SaveChangesAsync();
         if (result > 0)
         {
@@ -53,8 +61,9 @@
             issueListData = issueListData.FindAll(x => x.IssueId != issueIdToBeDeleted).ToList();
             StateHasChanged(); //updates Blazorise page
         }
+
         modalRef.Hide();
-    }   
+    }
 
     private void CancelDelete()
     {
