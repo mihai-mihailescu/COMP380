@@ -3,14 +3,17 @@
 @using ProjectManagementSystem.Features.Resources
 @using ProjectManagementSystem.Data
 @using ProjectManagementSystem.Features.Resources.Models
+@using ProjectManagementSystem.Features.Tasks 
 @inject ResourceService ResourceService
 @inject ApplicationDbContext db
 @inject NavigationManager nav
+@inject TaskService TaskService  
 
 @code {
     private Modal modalRef;
     Guid? resourceIdToBeDeleted;
     List<ResourceListModel> resourceListData = new List<ResourceListModel>();
+
 
     protected override async System.Threading.Tasks.Task OnInitializedAsync()
     {
@@ -36,7 +39,14 @@
     private async void ConfirmDelete()
     {
         var resourceDelete = await ResourceService.GetResourceById((Guid)resourceIdToBeDeleted);
+        var tasks = await TaskService.GetTasksByResourceId(resourceDelete.Id);
+        foreach (var task in tasks)
+        {
+            task.DeliverableId = null;
+        }
+
         db.Remove(resourceDelete);
+
         var result = await db.SaveChangesAsync();
         if (result > 0)
         {

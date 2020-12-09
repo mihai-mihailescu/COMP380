@@ -61,6 +61,16 @@ namespace ProjectManagementSystem.Features.Tasks
             return task;
         }
 
+        public async Task<List<Task>> GetTasksByResourceId(Guid resourceId)
+        {
+            var task = await (
+               from t in this.db.Task
+               where t.ResourceId == resourceId
+               select t
+               ).ToListAsync();
+            return task;
+        }
+
         public async Task<List<Task>> GetTasksDataAsync()
         {
             var taskModel = await (
