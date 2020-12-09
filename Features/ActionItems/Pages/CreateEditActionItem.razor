@@ -42,13 +42,9 @@
             action_itemModel = await ActionItemService.GetActionItemById(ActionItemId);
 
         }
-
-
         ActionItem = await ActionItemService.GetActionItemDataAsync();
         resource = await ResourceService.GetResourcesAsync();
         issues = await IssueService.GetIssuesDataAsync();
-
-      
     }
 
     private void ValidateNameExists(ValidatorEventArgs n)

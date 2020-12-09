@@ -20,8 +20,7 @@ namespace ProjectManagementSystem.Features.Issues
         public DateTime? ActualCompletionDate { get; set; }
         public IssueStatus Status { get; set; }
         public string StatusDescription { get; set; }
-        public DateTime? UpdateDate { get; set; }        
-        public Guid? DecisionId { get; set; } 
+        public DateTime? UpdateDate { get; set; }               
         public Collection<TaskIssue> TaskIssue { get; set; }
 
         public Issue()
@@ -48,8 +47,7 @@ namespace ProjectManagementSystem.Features.Issues
             issue.Property(x => x.ActualCompletionDate);
             issue.Property(x => x.Status);
             issue.Property(x => x.StatusDescription);
-            issue.Property(x => x.UpdateDate);
-            issue.HasOne<Decision>().WithOne().HasForeignKey<Issue>(x => x.DecisionId);
+            issue.Property(x => x.UpdateDate);            
         }
     }
 

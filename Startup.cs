@@ -15,9 +15,7 @@ using ProjectManagementSystem.Features.Skills;
 using ProjectManagementSystem.Features.Tasks;
 using ProjectManagementSystem.Features.Requirements;
 using ProjectManagementSystem.Features.ActionItems;
-
-
-
+using ProjectManagementSystem.Features.Decisions;
 
 namespace ProjectManagementSystem
 {
@@ -55,6 +53,7 @@ namespace ProjectManagementSystem
             services.AddTransient(typeof(DeliverableService), typeof(DeliverableService));
             services.AddTransient(typeof(SkillService), typeof(SkillService));
             services.AddTransient(typeof(ActionItemService), typeof(ActionItemService));
+            services.AddTransient(typeof(DecisionService), typeof(DecisionService));
 
             services.AddTransient(typeof(RequirementService), typeof(RequirementService));
         }
