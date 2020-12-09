@@ -26,6 +26,15 @@ app {
     align-items: center;
 }
 
+.modal {
+    background: rgba(000, 000, 000, 0.8);
+    min-height: 1000000px;
+}
+
+.modal-backdrop {
+    z-index: 1020 !important;
+}
+
 .main {
     flex: 1;
 }
