@@ -59,7 +59,7 @@ namespace ProjectManagementSystem.Features.Tasks
             task.Property(x => x.ActualEffort);
             task.Property(x => x.PercentCompleted);
             task.Property(x => x.ParentSummaryTaskId);            
-            task.HasOne<Deliverable>().WithOne().HasForeignKey<Task>(x => x.DeliverableId).HasConstraintName("FK_Deliverable");
+            task.HasOne<Deliverable>().WithMany().HasForeignKey(x => x.DeliverableId).HasConstraintName("FK_Deliverable");
             task.HasOne<Resource>().WithOne().HasForeignKey<Task>(x => x.ResourceId).HasConstraintName("FK_Resource");
             task.Property(x => x.ParentGroupTaskId);
 

@@ -1,0 +1,260 @@
+﻿@page "/deliverables/{Id:guid}"
+@page "/deliverables/create"
+@using ProjectManagementSystem.Features.Deliverables.Models
+@using ProjectManagementSystem.Features.Tasks
+@using ProjectManagementSystem.Features.Requirements
+@using ProjectManagementSystem.Data
+@using ProjectManagementSystem.Features.Shared
+@using Blazorise.Components
+@inject DeliverableService DeliverableService
+@inject TaskService TaskService
+@inject RequirementService RequirementService
+@inject NavigationManager navigation
+@inject ApplicationDbContext db
+
+
+@code {
+    //These are all global. Should not be the case
+    [Parameter]
+    public Guid Id { get; set; }    //this is the Id that comes in when a deliverable is selected
+
+    DeliverableModel deliverableModel = new DeliverableModel(); //Use for new delivs.
+    List<Tasks.Task> tempTasks = new List<Tasks.Task>();    //Unassociated Tasks
+    List<Requirements.Requirement> tempRequirements = new List<Requirements.Requirement>(); //Unassociated
+
+    Guid requirementId;
+    Guid taskId;
+
+    bool success;
+
+    protected override async System.Threading.Tasks.Task OnInitializedAsync()
+    {
+        //If Id is not empty, we know this is edit and we want to get the details
+        if (Id != Guid.Empty)
+        {
+            deliverableModel.Deliverable = await DeliverableService.GetDeliverableById(Id); //Global Model becomes the requested deliv
+            deliverableModel.AssociatedTasks = await TaskService.GetTaskByDeliverableId(Id);
+            deliverableModel.AssociatedRequirements = RequirementService.GetRequirementByDeliverableId(Id);
+        }
+        //If Guid is empty, then you need to create a new deliverable class
+        tempTasks = await TaskService.GetUnassociatedTasksAsync();
+        tempRequirements = RequirementService.GetUnassociatedRequirementsDataAsync();
+        //Create temp lists to give user options to select for multi select features
+
+        //Problems
+        //New Deliv with Task doesnt work.
+    }
+
+    private void CreateTempTaskList()
+    {
+
+    }
+
+    private void CreateTempRequirementList()
+    {
+
+    }
+
+    private void Save()
+    {
+        int entriesSaved = 0;
+        // If the name is empty, we cannot save because it is required
+        if (string.IsNullOrEmpty(deliverableModel.Deliverable.Name))
+        {
+            return;
+        }
+        else if (Id != Guid.Empty)
+        {
+            // Save edited changes
+            entriesSaved = db.SaveChanges();
+        }
+        else
+        {
+            // Save new changes
+            entriesSaved = DeliverableService.SaveDeliverable(deliverableModel);
+        }
+
+        if (entriesSaved > 0)
+        {
+            success = true;
+        }
+    }
+
+    private void OnAddTaskClick()
+    {
+        if (taskId == Guid.Empty)
+            return;
+        //Clicking "Add Task" without selecting a task does nothing
+        //Need to add selected task to the ListOfTasks
+        var selectedTask = tempTasks.Find(x => x.Id == taskId);
+        selectedTask.DeliverableId = deliverableModel.Deliverable.Id;
+        deliverableModel.AssociatedTasks.Add(selectedTask);
+
+        ////Remove from the temp list the task I just added
+        tempTasks.Remove(selectedTask);
+
+        taskId = Guid.Empty;
+    }
+
+    private void OnRemoveTaskClick()
+    {
+        foreach (var task in deliverableModel.AssociatedTasks)
+        {
+            tempTasks.Add(task);
+            task.DeliverableId = null;
+        }
+        deliverableModel.AssociatedTasks.Clear();
+    }
+
+    private void OnAddRequirementClick()
+    {
+        if (requirementId == Guid.Empty)
+            return;
+        var selectedRequirement = tempRequirements.Find(x => x.Id == requirementId);
+        selectedRequirement.DeliverableId = deliverableModel.Deliverable.Id;
+        deliverableModel.AssociatedRequirements.Add(selectedRequirement);
+        tempRequirements.Remove(selectedRequirement);
+
+        requirementId = Guid.Empty;
+    }
+
+    private void OnRemoveRequirementClick()
+    {
+        foreach (var requirement in deliverableModel.AssociatedRequirements)
+        {
+            tempRequirements.Add(requirement);
+            requirement.DeliverableId = null;
+        }
+        deliverableModel.AssociatedRequirements.Clear();
+    }
+
+    private void ValidateNameExists(ValidatorEventArgs n)
+    {
+        var name = Convert.ToString(n.Value);
+
+        n.Status = string.IsNullOrEmpty(name) ? ValidationStatus.None : ValidationStatus.Success;
+    }
+
+    private void ClickBack()
+    {
+        navigation.NavigateTo("/deliverables");
+    }
+
+    private void OnDueDateClick(DateTime? DueDate)
+    {
+        deliverableModel.Deliverable.DueDate = DueDate;
+    }
+}
+
+<div class="container-fluid">
+    @if (Id != Guid.Empty)
+    {
+        <h1>@deliverableModel.Deliverable.Name</h1> //I want to display the deliverable name here
+        //<TextEdit Disabled="true" Plaintext="true" Size="Size.Large" @bind-Text="@deliverableModel.Deliverable.Name"></TextEdit>
+        //<Divider Type="DividerType.TextContent" @bind-Text="deliverableModel.Deliverable.Name"></Divider>
+    }
+    else
+    {
+        <h1>Create Deliverable</h1>
+    }
+
+<div class="list-table">
+    <Field Horizontal="true">
+        <FieldLabel ColumnSize="ColumnSize.Is2">Name</FieldLabel>
+        <FieldBody ColumnSize="ColumnSize.Is10">
+            <Validation Validator="@ValidateNameExists">
+                <TextEdit @bind-Text="@deliverableModel.Deliverable.Name">
+                    <Feedback>
+                        <ValidationNone>Name is required</ValidationNone>
+                    </Feedback>
+                </TextEdit>
+            </Validation>
+        </FieldBody>
+    </Field>
+    <Field Horizontal="true">
+        <FieldLabel ColumnSize="ColumnSize.Is2">Description</FieldLabel>
+        <FieldBody ColumnSize="ColumnSize.Is10">
+            <TextEdit @bind-Text="@deliverableModel.Deliverable.Description" />
+        </FieldBody>
+    </Field>
+    <Field Horizontal="true">
+        <FieldLabel ColumnSize="ColumnSize.Is2">Due Date</FieldLabel>
+        <FieldBody ColumnSize="ColumnSize.IsAuto">
+            <DateEdit TValue="DateTime?" Date="@deliverableModel.Deliverable.DueDate" DateChanged="@OnDueDateClick" />
+        </FieldBody>
+    </Field>
+    <Field Horizontal="true">
+        <FieldLabel ColumnSize="ColumnSize.Is2">Tasks</FieldLabel>
+        <FieldBody ColumnSize="ColumnSize.Is3">
+            <Select TValue="Guid" @bind-SelectedValue="@taskId">
+                @if (taskId == Guid.Empty)
+                {
+                    <SelectItem Value="@taskId">Select...</SelectItem>
+                }
+                @foreach (var task in tempTasks)
+                {
+                    <SelectItem Value="task.Id">@task.Name</SelectItem>
+                }
+            </Select>
+        </FieldBody>
+        <Button Color="Color.Primary" Clicked="OnAddTaskClick">Add</Button>
+    </Field>
+    <Field Horizontal="true">
+        <FieldLabel ColumnSize="ColumnSize.Is2">Task Associations</FieldLabel>
+        <FieldBody ColumnSize="ColumnSize.Is3">
+            <Select Multiple="true" TValue="Guid" @bind-SelectedValue="@taskId">
+                @foreach (var task in deliverableModel.AssociatedTasks)
+                {
+   
+                    <SelectItem Value="task.Id">@task.Name</SelectItem>
+                }
+            </Select>
+            <div style="padding-top:5px;">
+                <Button Color="Color.Danger" Clicked="OnRemoveTaskClick">Remove All</Button>
+            </div>
+        </FieldBody>
+    </Field>
+    <Field Horizontal="true">
+        <FieldLabel ColumnSize="ColumnSize.Is2">Requirements</FieldLabel>
+        <FieldBody ColumnSize="ColumnSize.Is3">
+            <Select TValue="Guid" @bind-SelectedValue="@requirementId">
+                @if (requirementId == Guid.Empty)
+                {
+                    <SelectItem Value="@requirementId">Select...</SelectItem>
+                }
+                @foreach (var requirement in tempRequirements)
+                {
+                    <SelectItem Value="requirement.Id">@requirement.Name</SelectItem>
+                }
+            </Select>
+        </FieldBody>
+        <Button Color="Color.Primary" Clicked="OnAddRequirementClick">Add</Button>
+    </Field>
+    <Field Horizontal="true">
+        <FieldLabel ColumnSize="ColumnSize.Is2">Requirement Associations</FieldLabel>
+        <FieldBody ColumnSize="ColumnSize.Is3">
+            <Select Multiple="true" TValue="Guid" @bind-SelectedValue="@taskId">
+                @foreach (var requirement in deliverableModel.AssociatedRequirements)
+                {
+
+                    <SelectItem Value="requirement.Id">@requirement.Name</SelectItem>
+                }
+            </Select>
+            <div style="padding-top:5px;">
+                <Button Color="Color.Danger" Clicked="OnRemoveRequirementClick">Remove All</Button>
+            </div>
+        </FieldBody>
+    </Field>
+</div>
+    <div style="padding-top:1em; padding-bottom:2em;">
+        <Button class="back-button" Color="Color.Dark" @onclick="ClickBack">Back</Button>
+        @if (!success)
+        {
+            <Button class="save-button" Color="Color.Dark" @onclick="Save">Save</Button>
+        }
+        else
+        {
+            <Button class="save-button" Color="Color.Dark" @onclick="Save">Save Successful</Button>
+        }
+    </div>
+</div>

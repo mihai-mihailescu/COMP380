@@ -3,15 +3,17 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using ProjectManagementSystem.Data;
 
 namespace ProjectManagementSystem.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20201208041415_AddDecsionFKtoIssue")]
+    partial class AddDecsionFKtoIssue
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -95,7 +97,7 @@ namespace ProjectManagementSystem.Migrations
                     b.Property<string>("Description")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateTime?>("DueDate")
+                    b.Property<DateTime>("DueDate")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("Name")
@@ -164,17 +166,10 @@ namespace ProjectManagementSystem.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid?>("DeliverableId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.Property<string>("Name")
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("DeliverableId")
-                        .IsUnique()
-                        .HasFilter("[DeliverableId] IS NOT NULL");
 
                     b.ToTable("Requirement");
                 });
@@ -315,7 +310,9 @@ namespace ProjectManagementSystem.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("DeliverableId");
+                    b.HasIndex("DeliverableId")
+                        .IsUnique()
+                        .HasFilter("[DeliverableId] IS NOT NULL");
 
                     b.HasIndex("ResourceId")
                         .IsUnique()
@@ -342,13 +339,6 @@ namespace ProjectManagementSystem.Migrations
                     b.HasOne("ProjectManagementSystem.Features.Decisions.Decision", null)
                         .WithOne()
                         .HasForeignKey("ProjectManagementSystem.Features.Issues.Issue", "DecisionId");
-                });
-
-            modelBuilder.Entity("ProjectManagementSystem.Features.Requirements.Requirement", b =>
-                {
-                    b.HasOne("ProjectManagementSystem.Features.Deliverables.Deliverable", null)
-                        .WithOne()
-                        .HasForeignKey("ProjectManagementSystem.Features.Requirements.Requirement", "DeliverableId");
                 });
 
             modelBuilder.Entity("ProjectManagementSystem.Features.Resources.Resource", b =>
@@ -407,8 +397,8 @@ namespace ProjectManagementSystem.Migrations
             modelBuilder.Entity("ProjectManagementSystem.Features.Tasks.Task", b =>
                 {
                     b.HasOne("ProjectManagementSystem.Features.Deliverables.Deliverable", null)
-                        .WithMany()
-                        .HasForeignKey("DeliverableId")
+                        .WithOne()
+                        .HasForeignKey("ProjectManagementSystem.Features.Tasks.Task", "DeliverableId")
                         .HasConstraintName("FK_Deliverable");
 
                     b.HasOne("ProjectManagementSystem.Features.Resources.Resource", null)

@@ -1,8 +1,10 @@
-﻿using ProjectManagementSystem.Features.Issues;
+﻿using ProjectManagementSystem.Features.Deliverables;
+using ProjectManagementSystem.Features.Issues;
 using ProjectManagementSystem.Features.Resources;
 using ProjectManagementSystem.Features.Shared;
 using ProjectManagementSystem.Features.Skills;
 using ProjectManagementSystem.Features.Tasks;
+using ProjectManagementSystem.Features.Requirements;
 using ProjectManagementSystem.Features.ActionItems;
 
 using System;
@@ -16,8 +18,10 @@ namespace ProjectManagementSystem.Data
         {
             SeedResources(db);
             SeedTasks(db);
-            SeedIssues(db);
+            SeedIssues(db);                    
+            SeedDeliverables(db);
             SeedSkills(db);
+            SeedRequirements(db);
             SeedActionItems(db);
         }
 
@@ -123,10 +127,11 @@ namespace ProjectManagementSystem.Data
             {
                 var action_itemToAdd = new[]
                {
-                    new ActionItem(){ 
-                        Name = "Action Item 1"
-                    }
-            
+                    new ActionItem(){Name = "Action Item 1"},
+                    new ActionItem(){Name = "Action Item 2"},
+                    new ActionItem(){Name = "Action Item 3"},
+                    new ActionItem(){Name = "Action Item 4"}
+
                 };
                 db.Set<ActionItem>().AddRange(action_itemToAdd);
                 db.SaveChanges();
@@ -134,9 +139,42 @@ namespace ProjectManagementSystem.Data
 
         }
 
+        private static void SeedDeliverables(ApplicationDbContext db)
+        {
+            var deliverable = db.Deliverable.Select(x => x.Id).ToList();
 
-    
-    
+            if (deliverable.Count == 0)
+            {
+                var deliverableToAdd = new[]
+                {
+                    new Deliverable(){Name = "Deliverable 1", Description = "Information about deliverable 1", DueDate = DateTime.Now }  ,                  
+                    new Deliverable(){Name = "Deliverable 2", Description = "Information about deliverable 2", DueDate = DateTime.Now }  ,                  
+                    new Deliverable(){Name = "Deliverable 3", Description = "Information about deliverable 2", DueDate = DateTime.Now }  
+
+
+                };
+                db.Set<Deliverable>().AddRange(deliverableToAdd);
+                db.SaveChanges();
+            }
+        }
+
+        private static void SeedRequirements(ApplicationDbContext db)
+        {
+            var requirement = db.Requirement.Select(x => x.Id).ToList();
+
+            if(requirement.Count == 0)
+            {
+                var requirementToAdd = new[]
+                {
+                    new Requirement(){Name = "Requirement 1" },
+                    new Requirement(){Name = "Requirement 2" },
+                    new Requirement(){Name = "Requirement 3" },
+                    new Requirement(){Name = "Requirement 4" },
+                };
+                db.Set<Requirement>().AddRange(requirementToAdd);
+                db.SaveChanges();
+            }
+        }
     }
 
 }

@@ -3,15 +3,17 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using ProjectManagementSystem.Data;
 
 namespace ProjectManagementSystem.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20201208220421_TaskDelivWithMany")]
+    partial class TaskDelivWithMany
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -25,32 +27,32 @@ namespace ProjectManagementSystem.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<DateTime?>("ActualCompletionDate")
+                    b.Property<DateTime>("ActualCompletionDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<DateTime?>("DateAssigned")
+                    b.Property<DateTime>("DateAssigned")
                         .HasColumnType("datetime2");
 
-                    b.Property<DateTime?>("DateCreated")
+                    b.Property<DateTime>("DateCreated")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("Description")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateTime?>("ExpectedCompletionDate")
+                    b.Property<DateTime>("ExpectedCompletionDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<Guid?>("IssueId")
+                    b.Property<Guid>("IssueId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<Guid?>("ResourceId")
+                    b.Property<Guid>("ResourceId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<DateTime?>("UpdateDate")
+                    b.Property<DateTime>("UpdateDate")
                         .HasColumnType("datetime2");
 
                     b.Property<int>("status")
@@ -62,17 +64,15 @@ namespace ProjectManagementSystem.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("IssueId")
-                        .IsUnique()
-                        .HasFilter("[IssueId] IS NOT NULL");
+                        .IsUnique();
 
                     b.HasIndex("ResourceId")
-                        .IsUnique()
-                        .HasFilter("[ResourceId] IS NOT NULL");
+                        .IsUnique();
 
                     b.ToTable("ActionItem");
                 });
 
-            modelBuilder.Entity("ProjectManagementSystem.Features.Decisions.Decision", b =>
+            modelBuilder.Entity("ProjectManagementSystem.Features.Decision.Decision", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -121,9 +121,6 @@ namespace ProjectManagementSystem.Migrations
                     b.Property<DateTime>("DateRaised")
                         .HasColumnType("datetime2");
 
-                    b.Property<Guid?>("DecisionId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.Property<string>("Description")
                         .HasColumnType("nvarchar(max)");
 
@@ -150,10 +147,6 @@ namespace ProjectManagementSystem.Migrations
                         .HasColumnType("datetime2");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("DecisionId")
-                        .IsUnique()
-                        .HasFilter("[DecisionId] IS NOT NULL");
 
                     b.ToTable("Issue");
                 });
@@ -329,19 +322,16 @@ namespace ProjectManagementSystem.Migrations
                     b.HasOne("ProjectManagementSystem.Features.Issues.Issue", null)
                         .WithOne()
                         .HasForeignKey("ProjectManagementSystem.Features.ActionItems.ActionItem", "IssueId")
-                        .HasConstraintName("FK_Issue");
+                        .HasConstraintName("FK_Issue")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.HasOne("ProjectManagementSystem.Features.Resources.Resource", null)
                         .WithOne()
                         .HasForeignKey("ProjectManagementSystem.Features.ActionItems.ActionItem", "ResourceId")
-                        .HasConstraintName("FK_Resource_AI");
-                });
-
-            modelBuilder.Entity("ProjectManagementSystem.Features.Issues.Issue", b =>
-                {
-                    b.HasOne("ProjectManagementSystem.Features.Decisions.Decision", null)
-                        .WithOne()
-                        .HasForeignKey("ProjectManagementSystem.Features.Issues.Issue", "DecisionId");
+                        .HasConstraintName("FK_Resource_AI")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("ProjectManagementSystem.Features.Requirements.Requirement", b =>

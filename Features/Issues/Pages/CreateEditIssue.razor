@@ -1,0 +1,422 @@
+@page "/issues/{IssueId:guid}"
+@page "/issues/create"
+@using ProjectManagementSystem.Features.Issues
+@using ProjectManagementSystem.Features.Issues.Models
+@using ProjectManagementSystem.Features.Tasks.Models
+@using ProjectManagementSystem.Features.ActionItems
+@using ProjectManagementSystem.Features.Decisions
+@using ProjectManagementSystem.Features.Tasks
+@using ProjectManagementSystem.Data
+@using ProjectManagementSystem.Features.Shared
+@inject IssueService IssueService
+@inject ActionItemService ActionItemService
+@inject TaskService TaskService
+@inject NavigationManager navigation
+@inject ApplicationDbContext db
+
+@code{
+    [Parameter]
+    public Guid IssueId { get; set; }
+
+    IssueModel issueModel = new IssueModel();
+    Issue issue = new Issue();
+    TaskModel taskModel = new TaskModel();
+    List<Issue> issues = new List<Issue>();
+    List<Issue> issueTempList = new List<Issue>();
+    List<ActionItem> actionItemTempList = new List<ActionItem>();
+    List<Decision> decisionTempList = new List<Decision>();
+
+    Guid issueId;
+    Guid actionId;
+    Guid decisionId;
+    bool success;
+
+    protected override async System.Threading.Tasks.Task OnInitializedAsync()
+    {
+        if (IssueId != Guid.Empty)
+        {
+            issue = await IssueService.GetIssueById(IssueId);
+        }
+        issueTempList = await IssueService.GetIssuesDataAsync();
+        CreateTempIssueLists();
+    }
+
+    private void ValidateNameExists(ValidatorEventArgs n)
+    {
+        var name = Convert.ToString(n.Value);
+
+        n.Status = string.IsNullOrEmpty(name) ? ValidationStatus.None : ValidationStatus.Success;
+    }
+
+    //Assign issues to a temp list
+    private void CreateTempIssueLists()
+    {
+        //creates temp list for those issues
+        for (var i = 0; i < issues.Count; i++)
+        {
+            TaskIssue associatedIssue = new TaskIssue();
+
+            if (i < issue.TaskIssue.Count)
+            {
+                associatedIssue = issue.TaskIssue[i];
+            }
+
+            if (issues[i].Id != associatedIssue?.IssueId)
+            {
+                issueTempList.Add(issues[i]);
+            }
+        }
+    }
+
+    /*private void CreateTempActionItemList()
+    {
+        //creates temp list for those action items
+        for(var i = 0; i < actionItems.Count; i++){
+            TaskIssue associatedAction = new TaskIssue();
+
+            if(i < actionModel.ActionItem.TaskIssue.Count)
+            {
+                associatedAction = actionItem.ActionItem.TaskIssue[i];
+            }
+            if(actionItems[i].Id != associatedAction?.ActionId)
+            {
+                actionTempList.Add(issues[i]);
+            }
+        }
+    }
+    */
+
+    /*private void CreateTempDecisionList()
+    {
+        //creates temp list for those action items
+        for(var i = 0; i < decision.Count; i++){
+            TaskIssue decision = new TaskIssue();
+
+            if(i < decision.Decision.TaskIssue.Count)
+            {
+                associatedDecision = decision.Decision.TaskIssue[i];
+            }
+            if(decision[i].Id != associatedDecision?.DecisionId)
+            {
+                decisionTempList.Add(issues[i]);
+            }
+        }
+    }
+    */
+
+
+
+    private void Save()
+    {
+        int entriesSaved = 0;
+
+        // If the name is empty, we cannot save because it is required
+        if (string.IsNullOrEmpty(issue.Name))
+        {
+            return;
+        }
+        else if (IssueId != Guid.Empty)
+        {
+            // Save edited changes
+            entriesSaved = db.SaveChanges();
+        }
+        else
+        {
+            // Save new changes
+            entriesSaved = IssueService.SaveIssue(issue);
+        }
+
+        if (entriesSaved > 0)
+        {
+            success = true;
+        }
+    }
+
+    private void OnAddIssueClick()
+    {
+        // We do not want to add an empty guid
+        if (issueId == Guid.Empty)
+        {
+            return;
+        }
+
+        //Get issue from temp list
+        var issue = issueTempList.Find(x => x.Id == issueId);
+
+        // Add the TaskIssue data to our Task.TaskIssue list
+        taskModel.Task.TaskIssue.Add(new TaskIssue { TaskId = taskModel.Task.Id, Task = taskModel.Task, IssueId = issueId, Issue = issue });
+
+        // Remove the issue from our temp list because we don't want the user to add it again
+        issueTempList.Remove(issue);
+
+        // Set the issueId to empty so we display Select...
+        issueId = Guid.Empty;
+    }
+
+    private void OnRemoveIssuesClick()
+    {
+        var taskIssues = taskModel.Task.TaskIssue.ToList();
+
+        foreach (var taskIssue in taskIssues)
+        {
+            issueTempList.Add(taskIssue.Issue);
+            taskModel.Task.TaskIssue.Remove(taskIssue);
+        }
+    }
+
+    private void ClickBack()
+    {
+        navigation.NavigateTo("/issues");
+    }
+
+    private void OnAddActionItemClick()
+    {
+
+    }
+
+    private void OnRemoveActionItemsClick()
+    {
+
+    }
+
+    private void OnAddDecisionClick()
+    {
+
+    }
+
+    private void OnRemoveDecisonsClick()
+    {
+
+    }
+}
+
+<div class="container-fluid">
+    @if (IssueId != Guid.Empty)
+    {
+        <h1>Edit Issue</h1>
+    }
+    else
+    {
+        <h1>Create New Issue</h1>
+    }
+
+<div class="list-table">
+    <Field Horizontal="true">
+        <FieldLabel ColumnSize="ColumnSize.Is2">Name</FieldLabel>
+        <FieldBody ColumnSize="ColumnSize.Is10">
+            <Validation Validator="@ValidateNameExists">
+                <TextEdit @bind-Text="@issue.Name">
+                    <Feedback>
+                        <ValidationNone>Name is required</ValidationNone>
+                    </Feedback>
+                </TextEdit>
+            </Validation>
+        </FieldBody>
+    </Field>
+    <Field Horizontal="true">
+        <FieldLabel ColumnSize="ColumnSize.Is2">Description</FieldLabel>
+        <FieldBody ColumnSize="ColumnSize.Is10">
+            <TextEdit @bind-Text="@issue.Description" />
+        </FieldBody>
+    </Field>
+    <Field Horizontal="true">
+        <FieldLabel ColumnSize="ColumnSize.Is2">Priority</FieldLabel>
+        <FieldBody ColumnSize="ColumnSize.Is2">
+            <Select TValue="Priority" @bind-SelectedValue="@issue.Priority">
+                <SelectItem Value=" issue.Priority">@issue.Priority</SelectItem>
+                @if (Priority.Low != issue.Priority)
+                {
+                    <SelectItem Value="Priority.Low">@Priority.Low</SelectItem>
+                }
+                @if (Priority.Medium != issue.Priority)
+                {
+                    <SelectItem Value="Priority.Medium">@Priority.Medium</SelectItem>
+                }
+                @if (Priority.High != issue.Priority)
+                {
+                    <SelectItem Value="Priority.High">@Priority.High</SelectItem>
+                }
+            </Select>
+        </FieldBody>
+    </Field>
+    <Field Horizontal="true">
+        <FieldLabel ColumnSize="ColumnSize.Is2">Severity</FieldLabel>
+        <FieldBody ColumnSize="ColumnSize.Is2">
+            <Select TValue="Severity" @bind-SelectedValue="@issue.Severity">
+                <SelectItem Value=" issue.Severity">@issue.Severity</SelectItem>
+                @if (Severity.Minor != issue.Severity)
+                {
+                    <SelectItem Value="Severity.Minor">@Severity.Minor</SelectItem>
+                }
+                @if (Severity.Low != issue.Severity)
+                {
+                    <SelectItem Value="Severity.Low">@Severity.Low</SelectItem>
+                }
+                }
+                @if (Severity.Medium != issue.Severity)
+                {
+                    <SelectItem Value="Severity.Medium">@Severity.Medium</SelectItem>
+                }
+                @if (Severity.High != issue.Severity)
+                {
+                    <SelectItem Value="Severity.High">@Severity.High</SelectItem>
+                }
+                @if (Severity.Critical != issue.Severity)
+                {
+                    <SelectItem Value="Severity.Critical">@Severity.Critical</SelectItem>
+                }
+            </Select>
+        </FieldBody>
+    </Field>
+    <Field Horizontal="true">
+        <FieldLabel ColumnSize="ColumnSize.Is2">Date Raised</FieldLabel>
+        <FieldBody ColumnSize="ColumnSize.Is2">
+            <DateEdit TValue="DateTime" @bind-Date="@issue.DateRaised" />
+        </FieldBody>
+    </Field>
+    <Field Horizontal="true">
+        <FieldLabel ColumnSize="ColumnSize.Is2">Date Assigned</FieldLabel>
+        <FieldBody ColumnSize="ColumnSize.Is2">
+            <DateEdit TValue="DateTime?" @bind-Date="@issue.DateAssigned" />
+        </FieldBody>
+    </Field>
+    <Field Horizontal="true">
+        <FieldLabel ColumnSize="ColumnSize.Is2">Expected Completion Date</FieldLabel>
+        <FieldBody ColumnSize="ColumnSize.IsAuto">
+            <DateEdit TValue="DateTime?" @bind-Date="@issue.ExpectedCompletionDate" />
+        </FieldBody>
+    </Field>
+    <Field Horizontal="true">
+        <FieldLabel ColumnSize="ColumnSize.Is2">Actual Completion Date</FieldLabel>
+        <FieldBody ColumnSize="ColumnSize.IsAuto">
+            <DateEdit TValue="DateTime?" @bind-Date="@issue.ActualCompletionDate" />
+        </FieldBody>
+    </Field>
+    <Field Horizontal="true">
+        <FieldLabel ColumnSize="ColumnSize.Is2">Status</FieldLabel>
+        <FieldBody ColumnSize="ColumnSize.Is2">
+            <Select TValue="IssueStatus" @bind-SelectedValue="@issue.Status">
+                <SelectItem Value=" issue.Status">@issue.Status</SelectItem>
+                @if (IssueStatus.Open != issue.Status)
+                {
+                    <SelectItem Value="IssueStatus.Open">@IssueStatus.Open</SelectItem>
+                }
+                @if (IssueStatus.Closed != issue.Status)
+                {
+                    <SelectItem Value="IssueStatus.Closed">@IssueStatus.Closed</SelectItem>
+                }
+                }
+                @if (IssueStatus.InProgress != issue.Status)
+                {
+                    <SelectItem Value="IssueStatus.InProgress">@IssueStatus.InProgress</SelectItem>
+                }
+                @if (IssueStatus.Hold != issue.Status)
+                {
+                    <SelectItem Value="IssueStatus.Hold">@IssueStatus.Hold</SelectItem>
+                }
+                @if (IssueStatus.Complete != issue.Status)
+                {
+                    <SelectItem Value="IssueStatus.Complete">@IssueStatus.Complete</SelectItem>
+                }
+            </Select>
+        </FieldBody>
+    </Field>
+    <Field Horizontal="true">
+        <FieldLabel ColumnSize="ColumnSize.Is2">Status Description</FieldLabel>
+        <FieldBody ColumnSize="ColumnSize.Is3">
+            <TextEdit @bind-Text="@issue.StatusDescription" />
+        </FieldBody>
+    </Field>
+    <Field Horizontal="true">
+        <FieldLabel ColumnSize="ColumnSize.Is2">Update Date</FieldLabel>
+        <FieldBody ColumnSize="ColumnSize.Is3">
+            <DateEdit TValue="DateTime?" @bind-Date="@issue.UpdateDate" />
+        </FieldBody>
+    </Field>
+
+    <Field Horizontal="true">
+        <FieldLabel ColumnSize="ColumnSize.Is2">Action Items</FieldLabel>
+        <FieldBody ColumnSize="ColumnSize.Is3">
+            <Select TValue="Guid" @bind-SelectedValue="@actionId">
+                @if (actionId == Guid.Empty)
+                {
+                    <SelectItem Value="@actionId">Select...</SelectItem>
+                }
+                @foreach (var actionItem in actionItemTempList)
+                {
+                    <SelectItem Value="actionItem.Id">@actionItem.Name</SelectItem>
+                }
+            </Select>
+        </FieldBody>
+        <Button Color="Color.Primary" Clicked="OnAddActionItemClick">Add</Button>
+    </Field>
+    <Field Horizontal="true">
+        <FieldLabel ColumnSize="ColumnSize.Is2"></FieldLabel>
+        <FieldBody ColumnSize="ColumnSize.Is3">
+            <Select Multiple="true" TValue="Guid" @bind-SelectedValue="@decisionId">
+                @foreach (var item in taskModel.Task.TaskIssue)
+                {
+                    <SelectItem Value="@item.IssueId">@item.Issue.Name</SelectItem>
+                }
+            </Select>
+        </FieldBody>
+        <div>
+            <Button Color="Color.Danger" Clicked="OnRemoveActionItemsClick">Remove All</Button>
+        </div>
+    </Field>
+    <Field Horizontal="true">
+        <FieldLabel ColumnSize="ColumnSize.Is2">Decisions</FieldLabel>
+        <FieldBody ColumnSize="ColumnSize.Is3">
+            <Select TValue="Guid" @bind-SelectedValue="@decisionId">
+                @if (decisionId == Guid.Empty)
+                {
+                    <SelectItem Value="@decisionId">Select...</SelectItem>
+                }
+                @foreach (var decision in decisionTempList)
+                {
+                    <SelectItem Value="decision.Id">@decision.Name</SelectItem>
+                }
+            </Select>
+        </FieldBody>
+        <Button Color="Color.Primary" Clicked="OnAddDecisionClick">Add</Button>
+    </Field>
+    <Field Horizontal="true">
+        <FieldLabel ColumnSize="ColumnSize.Is2"></FieldLabel>
+        <FieldBody ColumnSize="ColumnSize.Is3">
+            <Select Multiple="true" TValue="Guid" @bind-SelectedValue="@decisionId">
+                @foreach (var item in taskModel.Task.TaskIssue)
+                {
+                    <SelectItem Value="@item.IssueId">@item.Issue.Name</SelectItem>
+                }
+            </Select>
+        </FieldBody>
+        <div>
+            <Button Color="Color.Danger" Clicked="OnRemoveDecisonsClick">Remove All</Button>
+        </div>
+    </Field>
+</div>
+    <div style="padding-top:1em; padding-bottom:2em;">
+        <Button class="back-button" Color="Color.Dark" @onclick="ClickBack">Back</Button>
+        @if (!success)
+        {
+            <Button class="save-button" Color="Color.Dark" @onclick="Save">Save</Button>
+        }
+        else
+        {
+            <Button class="save-button" Color="Color.Dark" @onclick="Save">Save Successful</Button>
+        }
+    </div>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
