@@ -22,6 +22,7 @@
     IssueModel issueModel = new IssueModel();
     List<ActionItem> unassociatedActionItems = new List<ActionItem>();
     List<Decision> unassociatedDecisions = new List<Decision>();
+    List<Issue> issueList = new List<Issue>();    //used for name validation
 
     Guid actionId;
     Guid decisionId;
@@ -39,6 +40,7 @@
 
         unassociatedActionItems = await ActionItemService.GetUnassociatedActionItems(issueModel.Issue);
         unassociatedDecisions = await DecisionService.GetUnassociatedDecisions(issueModel.Issue);
+        issueList = await IssueService.GetIssuesDataAsync();
     }
 
     private void ValidateNameExists(ValidatorEventArgs n)
@@ -46,6 +48,13 @@
         var name = Convert.ToString(n.Value);
 
         n.Status = string.IsNullOrEmpty(name) ? ValidationStatus.None : ValidationStatus.Success;
+        //Check that the string doesnt exist.
+
+        foreach (var issue in issueList)
+            if (issue.Name == name)
+                n.Status = ValidationStatus.Error;
+
+
     }
 
     private void Save()
@@ -121,7 +130,7 @@
 
         unassociatedDecisions.Remove(selectedDecision);
 
-        actionId = Guid.Empty;
+        decisionId = Guid.Empty;
     }
 
     private void OnRemoveDecisonsClick()
@@ -154,6 +163,7 @@
                 <TextEdit @bind-Text="@issueModel.Issue.Name">
                     <Feedback>
                         <ValidationNone>Name is required</ValidationNone>
+                        <ValidationError>Name is already taken</ValidationError>
                     </Feedback>
                 </TextEdit>
             </Validation>
