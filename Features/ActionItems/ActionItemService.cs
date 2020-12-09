@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using ProjectManagementSystem.Data;
 using ProjectManagementSystem.Features.ActionItems.Models;
+using ProjectManagementSystem.Features.Issues;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -68,12 +69,22 @@ namespace ProjectManagementSystem.Features.ActionItems
             return action_item;
         }
 
-        public async Task<List<ActionItem>> GetActionItemsByIssueId(Guid IssueId)
+        public async Task<List<ActionItem>> GetAssociatedActionItems(Issue issue)
         {
-            var action_item = await (from ActionItem in this.db.ActionItem
-                                     where ActionItem.IssueId == IssueId
-                                     select ActionItem).ToListAsync();
-            return action_item;
+            var actionItems = await (
+                from actionitem in this.db.ActionItem
+                where actionitem.IssueId == issue.Id
+                select actionitem).ToListAsync();
+            return actionItems;
+        }
+
+        public async Task<List<ActionItem>> GetUnassociatedActionItems(Issue issue)
+        {
+            var actionItems = await (
+                from actionitem in this.db.ActionItem
+                where actionitem.IssueId == null
+                select actionitem).ToListAsync();
+            return actionItems;
         }
 
         public int SaveActionItem(ActionItem action_itemData)

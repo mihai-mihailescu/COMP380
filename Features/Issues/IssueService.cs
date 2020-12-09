@@ -2,6 +2,8 @@ using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using ProjectManagementSystem.Data;
 using ProjectManagementSystem.Features.Issues.Models;
+using ProjectManagementSystem.Features.ActionItems;
+using ProjectManagementSystem.Features.Decisions;
 using ProjectManagementSystem.Features.Shared;
 using System;
 using System.Collections.Generic;
@@ -26,25 +28,26 @@ namespace ProjectManagementSystem.Features.Issues
         }
 
         public async Task<List<IssueListModel>> GetIssuesListData(){
-            var issueListData = await (from issue in this.db.Issue
-                                       join addIssue in this.db.Issue on issue.Id equals addIssue.Id
-                                       into issueTaskData
-                                       from task in issueTaskData.DefaultIfEmpty()
-                                       select new IssueListModel
-                                       {
-                                           IssueId = issue.Id,
-                                           Name = issue.Name,
-                                           Description = issue.Description,
-                                           Priority = issue.Priority,
-                                           Severity = issue.Severity,
-                                           DateRaised = issue.DateRaised,
-                                           DateAssigned = issue.DateAssigned,
-                                           ExpectedCompletionDate = issue.ExpectedCompletionDate,
-                                           ActualCompletionDate = issue.ActualCompletionDate,
-                                           Status = issue.Status,
-                                           StatusDescription = issue.StatusDescription,
-                                           UpdateDate = issue.UpdateDate
-                                       }).ToListAsync();
+            var issueListData = await (
+                from issue in this.db.Issue
+                join addIssue in this.db.Issue on issue.Id equals addIssue.Id
+                into issueTaskData
+                from task in issueTaskData.DefaultIfEmpty()
+                select new IssueListModel
+                {
+                    IssueId = issue.Id,
+                    Name = issue.Name,
+                    Description = issue.Description,
+                    Priority = issue.Priority,
+                    Severity = issue.Severity,
+                    DateRaised = issue.DateRaised,
+                    DateAssigned = issue.DateAssigned,
+                    ExpectedCompletionDate = issue.ExpectedCompletionDate,
+                    ActualCompletionDate = issue.ActualCompletionDate,
+                    Status = issue.Status,
+                    StatusDescription = issue.StatusDescription,
+                    UpdateDate = issue.UpdateDate
+                }).ToListAsync();
             return issueListData;
         }
         
@@ -55,28 +58,14 @@ namespace ProjectManagementSystem.Features.Issues
                 select issue).FirstAsync();
             return issueModel;
         }
-         
-         public int SaveIssue(Issue issueData)
+
+         public int SaveIssue(IssueModel issueData)
         {
             int entriesSaved = 0;
 
-            var issue = new Issue()
-            {
-                Name = issueData.Name,
-                Description = issueData.Description,
-                Priority = issueData.Priority,
-                Severity = issueData.Severity,
-                DateRaised = issueData.DateRaised,
-                DateAssigned = issueData.DateAssigned,
-                ExpectedCompletionDate = issueData.ExpectedCompletionDate,
-                ActualCompletionDate = issueData.ActualCompletionDate,
-                Status = issueData.Status,
-                StatusDescription = issueData.StatusDescription,
-                UpdateDate = DateTime.Now
-            };
             try
             {
-                this.db.Add(issue);
+                this.db.Add(issueData.Issue);
                 entriesSaved = this.db.SaveChanges();
             }
             catch (SqlException ex)

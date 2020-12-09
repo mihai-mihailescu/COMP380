@@ -14,7 +14,6 @@
 
 
 @code {
-    //These are all global. Should not be the case
     [Parameter]
     public Guid Id { get; set; }    //this is the Id that comes in when a deliverable is selected
 
@@ -36,23 +35,9 @@
             deliverableModel.AssociatedTasks = await TaskService.GetTaskByDeliverableId(Id);
             deliverableModel.AssociatedRequirements = RequirementService.GetRequirementByDeliverableId(Id);
         }
-        //If Guid is empty, then you need to create a new deliverable class
+
         tempTasks = await TaskService.GetUnassociatedTasksAsync();
         tempRequirements = RequirementService.GetUnassociatedRequirementsDataAsync();
-        //Create temp lists to give user options to select for multi select features
-
-        //Problems
-        //New Deliv with Task doesnt work.
-    }
-
-    private void CreateTempTaskList()
-    {
-
-    }
-
-    private void CreateTempRequirementList()
-    {
-
     }
 
     private void Save()
@@ -84,6 +69,7 @@
     {
         if (taskId == Guid.Empty)
             return;
+
         //Clicking "Add Task" without selecting a task does nothing
         //Need to add selected task to the ListOfTasks
         var selectedTask = tempTasks.Find(x => x.Id == taskId);
@@ -150,8 +136,6 @@
     @if (Id != Guid.Empty)
     {
         <h1>@deliverableModel.Deliverable.Name</h1> //I want to display the deliverable name here
-        //<TextEdit Disabled="true" Plaintext="true" Size="Size.Large" @bind-Text="@deliverableModel.Deliverable.Name"></TextEdit>
-        //<Divider Type="DividerType.TextContent" @bind-Text="deliverableModel.Deliverable.Name"></Divider>
     }
     else
     {

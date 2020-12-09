@@ -20,14 +20,8 @@
     public Guid IssueId { get; set; }
 
     IssueModel issueModel = new IssueModel();
-    Issue issue = new Issue();
-    List<Issue> issues = new List<Issue>();
-    List<ActionItem> actionItemList = new List<ActionItem>();
-    List<ActionItem> actionItemTempList = new List<ActionItem>();
-    List<ActionItem> issuesAssociatedToActionItem = new List<ActionItem>();
-    List<Decision> decisionList = new List<Decision>();
-    List<Decision> decisionTempList = new List<Decision>();
-    List<Decision> decisionsWithIssueAssociation = new List<Decision>();
+    List<ActionItem> unassociatedActionItems = new List<ActionItem>();
+    List<Decision> unassociatedDecisions = new List<Decision>();
 
     Guid actionId;
     Guid decisionId;
@@ -37,16 +31,14 @@
     {
         if (IssueId != Guid.Empty)
         {
-            issue = await IssueService.GetIssueById(IssueId);
-            issuesAssociatedToActionItem = await ActionItemService.GetActionItemsByIssueId(IssueId);
-            decisionsWithIssueAssociation = await DecisionService.GetDecisionsByIssueId(IssueId);
+            issueModel.Issue = await IssueService.GetIssueById(IssueId);
+
+            issueModel.AssociatedActionItems = await ActionItemService.GetAssociatedActionItems(issueModel.Issue);
+            issueModel.AssociatedDecision = await DecisionService.GetAssociatedDecisions(issueModel.Issue);
         }
 
-        actionItemList = await ActionItemService.GetActionItemDataAsync();
-
-        decisionList = await DecisionService.GetDecisionsDataAsync();
-        CreateTempActionItemList();
-        CreateTempDecisionList();
+        unassociatedActionItems = await ActionItemService.GetUnassociatedActionItems(issueModel.Issue);
+        unassociatedDecisions = await DecisionService.GetUnassociatedDecisions(issueModel.Issue);
     }
 
     private void ValidateNameExists(ValidatorEventArgs n)
@@ -56,34 +48,12 @@
         n.Status = string.IsNullOrEmpty(name) ? ValidationStatus.None : ValidationStatus.Success;
     }
 
-    private void CreateTempActionItemList()
-    {
-        foreach(var actionItem in actionItemList)
-        {
-            if(actionItem.IssueId != IssueId)
-            {
-                actionItemTempList.Add(actionItem);
-            }
-        }
-    }
-
-    private void CreateTempDecisionList()
-    {
-        foreach(var decision in decisionList)
-        {
-            if(decision.IssueId != IssueId)
-            {
-                decisionTempList.Add(decision);
-            }
-        }
-    }
-
     private void Save()
     {
         int entriesSaved = 0;
 
         // If the name is empty, we cannot save because it is required
-        if (string.IsNullOrEmpty(issue.Name))
+        if (string.IsNullOrEmpty(issueModel.Issue.Name))
         {
             return;
         }
@@ -95,7 +65,7 @@
         else
         {
             // Save new changes
-            entriesSaved = IssueService.SaveIssue(issue);
+            entriesSaved = IssueService.SaveIssue(issueModel);
         }
 
         if (entriesSaved > 0)
@@ -117,31 +87,24 @@
             return;
         }
 
-        var actionItem = actionItemTempList.Find(x => x.Id == actionId);
-        actionItem.IssueId = IssueId;
-        issuesAssociatedToActionItem.Add(actionItem);
+        var selectedActionItem = unassociatedActionItems.Find(x => x.Id == actionId);
+        selectedActionItem.IssueId = issueModel.Issue.Id;
+        issueModel.AssociatedActionItems.Add(selectedActionItem);
 
-        actionItemTempList.Remove(actionItem);
+        unassociatedActionItems.Remove(selectedActionItem);
 
         actionId = Guid.Empty;
     }
 
     private void OnRemoveActionItemsClick()
     {
-        foreach (var actionItem in issuesAssociatedToActionItem)
+        foreach (var actionItem in issueModel.AssociatedActionItems)
         {
-            actionItemTempList.Add(actionItem);
+            unassociatedActionItems.Add(actionItem);
+            actionItem.IssueId = null;
         }
 
-        for (int i = 0; i < actionItemList.Count; i++)
-        {
-            if (actionItemList[i].IssueId == IssueId)
-            {
-                actionItemList[i].IssueId = null;
-            }
-        }
-
-        issuesAssociatedToActionItem.Clear();
+        issueModel.AssociatedActionItems.Clear();
     }
 
     private void OnAddDecisionClick()
@@ -152,38 +115,31 @@
             return;
         }
 
-        var decision = decisionTempList.Find(x => x.Id == decisionId);
-        decision.IssueId = IssueId;
-        decisionsWithIssueAssociation.Add(decision);
+        var selectedDecision = unassociatedDecisions.Find(x => x.Id == decisionId);
+        selectedDecision.IssueId = issueModel.Issue.Id;
+        issueModel.AssociatedDecision.Add(selectedDecision);
 
-        decisionTempList.Remove(decision);
+        unassociatedDecisions.Remove(selectedDecision);
 
         actionId = Guid.Empty;
     }
 
     private void OnRemoveDecisonsClick()
     {
-        foreach (var decision in decisionsWithIssueAssociation)
+        foreach (var decision in issueModel.AssociatedDecision)
         {
-            decisionTempList.Add(decision);
+            unassociatedDecisions.Add(decision);
+            decision.IssueId = null;
         }
 
-        for(int i = 0; i < decisionList.Count; i++)
-        {
-            if(decisionList[i].IssueId == IssueId)
-            {
-                decisionList[i].IssueId = null;
-            }
-        }
-
-        decisionsWithIssueAssociation.Clear();
+        issueModel.AssociatedDecision.Clear();
     }
 }
 
 <div class="container-fluid">
     @if (IssueId != Guid.Empty)
     {
-        <h1>Edit Issue</h1>
+        <h1>@issueModel.Issue.Name</h1>
     }
     else
     {
@@ -195,7 +151,7 @@
         <FieldLabel ColumnSize="ColumnSize.Is2">Name</FieldLabel>
         <FieldBody ColumnSize="ColumnSize.Is10">
             <Validation Validator="@ValidateNameExists">
-                <TextEdit @bind-Text="@issue.Name">
+                <TextEdit @bind-Text="@issueModel.Issue.Name">
                     <Feedback>
                         <ValidationNone>Name is required</ValidationNone>
                     </Feedback>
@@ -206,23 +162,23 @@
     <Field Horizontal="true">
         <FieldLabel ColumnSize="ColumnSize.Is2">Description</FieldLabel>
         <FieldBody ColumnSize="ColumnSize.Is10">
-            <TextEdit @bind-Text="@issue.Description" />
+            <TextEdit @bind-Text="@issueModel.Issue.Description" />
         </FieldBody>
     </Field>
     <Field Horizontal="true">
         <FieldLabel ColumnSize="ColumnSize.Is2">Priority</FieldLabel>
         <FieldBody ColumnSize="ColumnSize.Is2">
-            <Select TValue="Priority" @bind-SelectedValue="@issue.Priority">
-                <SelectItem Value=" issue.Priority">@issue.Priority</SelectItem>
-                @if (Priority.Low != issue.Priority)
+            <Select TValue="Priority" @bind-SelectedValue="@issueModel.Issue.Priority">
+                <SelectItem Value=" issueModel.Issue.Priority">@issueModel.Issue.Priority</SelectItem>
+                @if (Priority.Low != issueModel.Issue.Priority)
                 {
                     <SelectItem Value="Priority.Low">@Priority.Low</SelectItem>
                 }
-                @if (Priority.Medium != issue.Priority)
+                @if (Priority.Medium != issueModel.Issue.Priority)
                 {
                     <SelectItem Value="Priority.Medium">@Priority.Medium</SelectItem>
                 }
-                @if (Priority.High != issue.Priority)
+                @if (Priority.High != issueModel.Issue.Priority)
                 {
                     <SelectItem Value="Priority.High">@Priority.High</SelectItem>
                 }
@@ -232,26 +188,26 @@
     <Field Horizontal="true">
         <FieldLabel ColumnSize="ColumnSize.Is2">Severity</FieldLabel>
         <FieldBody ColumnSize="ColumnSize.Is2">
-            <Select TValue="Severity" @bind-SelectedValue="@issue.Severity">
-                <SelectItem Value=" issue.Severity">@issue.Severity</SelectItem>
-                @if (Severity.Minor != issue.Severity)
+            <Select TValue="Severity" @bind-SelectedValue="@issueModel.Issue.Severity">
+                <SelectItem Value=" issueModel.Issue.Severity">@issueModel.Issue.Severity</SelectItem>
+                @if (Severity.Minor != issueModel.Issue.Severity)
                 {
                     <SelectItem Value="Severity.Minor">@Severity.Minor</SelectItem>
                 }
-                @if (Severity.Low != issue.Severity)
+                @if (Severity.Low != issueModel.Issue.Severity)
                 {
                     <SelectItem Value="Severity.Low">@Severity.Low</SelectItem>
                 }
                 }
-                @if (Severity.Medium != issue.Severity)
+                @if (Severity.Medium != issueModel.Issue.Severity)
                 {
                     <SelectItem Value="Severity.Medium">@Severity.Medium</SelectItem>
                 }
-                @if (Severity.High != issue.Severity)
+                @if (Severity.High != issueModel.Issue.Severity)
                 {
                     <SelectItem Value="Severity.High">@Severity.High</SelectItem>
                 }
-                @if (Severity.Critical != issue.Severity)
+                @if (Severity.Critical != issueModel.Issue.Severity)
                 {
                     <SelectItem Value="Severity.Critical">@Severity.Critical</SelectItem>
                 }
@@ -261,50 +217,50 @@
     <Field Horizontal="true">
         <FieldLabel ColumnSize="ColumnSize.Is2">Date Raised</FieldLabel>
         <FieldBody ColumnSize="ColumnSize.Is2">
-            <DateEdit TValue="DateTime" @bind-Date="@issue.DateRaised" />
+            <DateEdit TValue="DateTime" @bind-Date="@issueModel.Issue.DateRaised" />
         </FieldBody>
     </Field>
     <Field Horizontal="true">
         <FieldLabel ColumnSize="ColumnSize.Is2">Date Assigned</FieldLabel>
         <FieldBody ColumnSize="ColumnSize.Is2">
-            <DateEdit TValue="DateTime?" @bind-Date="@issue.DateAssigned" />
+            <DateEdit TValue="DateTime?" @bind-Date="@issueModel.Issue.DateAssigned" />
         </FieldBody>
     </Field>
     <Field Horizontal="true">
         <FieldLabel ColumnSize="ColumnSize.Is2">Expected Completion Date</FieldLabel>
-        <FieldBody ColumnSize="ColumnSize.IsAuto">
-            <DateEdit TValue="DateTime?" @bind-Date="@issue.ExpectedCompletionDate" />
+        <FieldBody ColumnSize="ColumnSize.Is2">
+            <DateEdit TValue="DateTime?" @bind-Date="@issueModel.Issue.ExpectedCompletionDate" />
         </FieldBody>
     </Field>
     <Field Horizontal="true">
         <FieldLabel ColumnSize="ColumnSize.Is2">Actual Completion Date</FieldLabel>
-        <FieldBody ColumnSize="ColumnSize.IsAuto">
-            <DateEdit TValue="DateTime?" @bind-Date="@issue.ActualCompletionDate" />
+        <FieldBody ColumnSize="ColumnSize.Is2">
+            <DateEdit TValue="DateTime?" @bind-Date="@issueModel.Issue.ActualCompletionDate" />
         </FieldBody>
     </Field>
     <Field Horizontal="true">
         <FieldLabel ColumnSize="ColumnSize.Is2">Status</FieldLabel>
         <FieldBody ColumnSize="ColumnSize.Is2">
-            <Select TValue="IssueStatus" @bind-SelectedValue="@issue.Status">
-                <SelectItem Value=" issue.Status">@issue.Status</SelectItem>
-                @if (IssueStatus.Open != issue.Status)
+            <Select TValue="IssueStatus" @bind-SelectedValue="@issueModel.Issue.Status">
+                <SelectItem Value=" issueModel.Issue.Status">@issueModel.Issue.Status</SelectItem>
+                @if (IssueStatus.Open != issueModel.Issue.Status)
                 {
                     <SelectItem Value="IssueStatus.Open">@IssueStatus.Open</SelectItem>
                 }
-                @if (IssueStatus.Closed != issue.Status)
+                @if (IssueStatus.Closed != issueModel.Issue.Status)
                 {
                     <SelectItem Value="IssueStatus.Closed">@IssueStatus.Closed</SelectItem>
                 }
                 }
-                @if (IssueStatus.InProgress != issue.Status)
+                @if (IssueStatus.InProgress != issueModel.Issue.Status)
                 {
-                    <SelectItem Value="IssueStatus.InProgress">@IssueStatus.InProgress</SelectItem>
+                    <SelectItem Value="IssueStatus.InProgress">In Progress</SelectItem>
                 }
-                @if (IssueStatus.Hold != issue.Status)
+                @if (IssueStatus.Hold != issueModel.Issue.Status)
                 {
                     <SelectItem Value="IssueStatus.Hold">@IssueStatus.Hold</SelectItem>
                 }
-                @if (IssueStatus.Complete != issue.Status)
+                @if (IssueStatus.Complete != issueModel.Issue.Status)
                 {
                     <SelectItem Value="IssueStatus.Complete">@IssueStatus.Complete</SelectItem>
                 }
@@ -314,13 +270,13 @@
     <Field Horizontal="true">
         <FieldLabel ColumnSize="ColumnSize.Is2">Status Description</FieldLabel>
         <FieldBody ColumnSize="ColumnSize.Is3">
-            <TextEdit @bind-Text="@issue.StatusDescription" />
+            <TextEdit @bind-Text="@issueModel.Issue.StatusDescription" />
         </FieldBody>
     </Field>
     <Field Horizontal="true">
         <FieldLabel ColumnSize="ColumnSize.Is2">Update Date</FieldLabel>
-        <FieldBody ColumnSize="ColumnSize.Is3">
-            <DateEdit TValue="DateTime?" @bind-Date="@issue.UpdateDate" />
+        <FieldBody ColumnSize="ColumnSize.Is2">
+            <DateEdit TValue="DateTime?" @bind-Date="@issueModel.Issue.UpdateDate" />
         </FieldBody>
     </Field>
 
@@ -332,7 +288,7 @@
                 {
                     <SelectItem Value="@actionId">Select...</SelectItem>
                 }
-                @foreach (var actionItem in actionItemTempList)
+                @foreach (var actionItem in unassociatedActionItems)
                 {
                     <SelectItem Value="actionItem.Id">@actionItem.Name</SelectItem>
                 }
@@ -344,7 +300,7 @@
         <FieldLabel ColumnSize="ColumnSize.Is2"></FieldLabel>
         <FieldBody ColumnSize="ColumnSize.Is3">
             <Select Multiple="true" TValue="Guid" @bind-SelectedValue="@actionId">
-                @foreach (var item in issuesAssociatedToActionItem)
+                @foreach (var item in issueModel.AssociatedActionItems)
                 {
                     <SelectItem Value="@item.IssueId">@item.Name</SelectItem>
                 }
@@ -362,7 +318,7 @@
                 {
                     <SelectItem Value="@decisionId">Select...</SelectItem>
                 }
-                @foreach (var decision in decisionTempList)
+                @foreach (var decision in unassociatedDecisions)
                 {
                     <SelectItem Value="decision.Id">@decision.Name</SelectItem>
                 }
@@ -374,7 +330,7 @@
         <FieldLabel ColumnSize="ColumnSize.Is2"></FieldLabel>
         <FieldBody ColumnSize="ColumnSize.Is3">
             <Select Multiple="true" TValue="Guid" @bind-SelectedValue="@decisionId">
-                @foreach (var item in decisionsWithIssueAssociation)
+                @foreach (var item in issueModel.AssociatedDecision)
                 {
                     <SelectItem Value="@item.Id">@item.Name</SelectItem>
                 }
