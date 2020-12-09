@@ -3,15 +3,17 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using ProjectManagementSystem.Data;
 
 namespace ProjectManagementSystem.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20201209064721_UpdateDecisionTable")]
+    partial class UpdateDecisionTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -122,6 +124,9 @@ namespace ProjectManagementSystem.Migrations
                     b.Property<DateTime>("DateRaised")
                         .HasColumnType("datetime2");
 
+                    b.Property<Guid?>("DecisionId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<string>("Description")
                         .HasColumnType("nvarchar(max)");
 
@@ -148,6 +153,10 @@ namespace ProjectManagementSystem.Migrations
                         .HasColumnType("datetime2");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("DecisionId")
+                        .IsUnique()
+                        .HasFilter("[DecisionId] IS NOT NULL");
 
                     b.ToTable("Issue");
                 });
@@ -331,6 +340,13 @@ namespace ProjectManagementSystem.Migrations
                     b.HasOne("ProjectManagementSystem.Features.Issues.Issue", null)
                         .WithMany()
                         .HasForeignKey("IssueId");
+                });
+
+            modelBuilder.Entity("ProjectManagementSystem.Features.Issues.Issue", b =>
+                {
+                    b.HasOne("ProjectManagementSystem.Features.Decisions.Decision", null)
+                        .WithOne()
+                        .HasForeignKey("ProjectManagementSystem.Features.Issues.Issue", "DecisionId");
                 });
 
             modelBuilder.Entity("ProjectManagementSystem.Features.Requirements.Requirement", b =>

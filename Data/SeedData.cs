@@ -9,6 +9,7 @@ using ProjectManagementSystem.Features.ActionItems;
 
 using System;
 using System.Linq;
+using ProjectManagementSystem.Features.Decisions;
 
 namespace ProjectManagementSystem.Data
 {
@@ -23,6 +24,7 @@ namespace ProjectManagementSystem.Data
             SeedSkills(db);
             SeedRequirements(db);
             SeedActionItems(db);
+            SeedDecisions(db);
         }
 
         private static void SeedResources(ApplicationDbContext db)
@@ -172,6 +174,24 @@ namespace ProjectManagementSystem.Data
                     new Requirement(){Name = "Requirement 4" },
                 };
                 db.Set<Requirement>().AddRange(requirementToAdd);
+                db.SaveChanges();
+            }
+        }
+
+        private static void SeedDecisions(ApplicationDbContext db)
+        {
+            var decision = db.Decision.Select(x => x.Id).ToList();
+
+            if (decision.Count == 0)
+            {
+                var decisionToAdd = new[]
+                {
+                    new Decision(){Name = "Decision 1" },
+                    new Decision(){Name = "Decision 2" },
+                    new Decision(){Name = "Decision 3" },
+                    new Decision(){Name = "Decision 4" },
+                };
+                db.Set<Decision>().AddRange(decisionToAdd);
                 db.SaveChanges();
             }
         }

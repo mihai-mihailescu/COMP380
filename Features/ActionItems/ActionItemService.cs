@@ -68,6 +68,13 @@ namespace ProjectManagementSystem.Features.ActionItems
             return action_item;
         }
 
+        public async Task<List<ActionItem>> GetActionItemsByIssueId(Guid IssueId)
+        {
+            var action_item = await (from ActionItem in this.db.ActionItem
+                                     where ActionItem.IssueId == IssueId
+                                     select ActionItem).ToListAsync();
+            return action_item;
+        }
 
         public int SaveActionItem(ActionItem action_itemData)
         {
