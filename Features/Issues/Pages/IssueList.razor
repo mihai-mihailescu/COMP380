@@ -1,5 +1,7 @@
 @page "/issues"
 @using Blazorise.DataGrid
+@using ProjectManagementSystem.Features.ActionItems
+@using ProjectManagementSystem.Features.Decisions
 @using ProjectManagementSystem.Features.Issues
 @using ProjectManagementSystem.Features.Issues.Models
 @using ProjectManagementSystem.Data
@@ -39,6 +41,11 @@
     {
         var issueDelete = await IssueService.GetIssueById((Guid)issueIdToBeDeleted);
         db.Remove(issueDelete);
+
+        IssueModel toDelete = new IssueModel();
+        //get all associated actions items and decisions
+        //set their issue id to null
+        //remove the sisue
         var result = await db.SaveChangesAsync();
         if (result > 0)
         {
@@ -47,7 +54,7 @@
             StateHasChanged(); //updates Blazorise page
         }
         modalRef.Hide();
-    }
+    }   
 
     private void CancelDelete()
     {
