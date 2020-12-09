@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using ProjectManagementSystem.Features.ActionItems;
-using ProjectManagementSystem.Features.Decision;
+using ProjectManagementSystem.Features.Decisions;
 using ProjectManagementSystem.Features.Deliverables;
 using ProjectManagementSystem.Features.Issues;
 using ProjectManagementSystem.Features.Requirements;

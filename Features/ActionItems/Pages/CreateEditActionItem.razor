@@ -1,0 +1,259 @@
+﻿@page "/action-items/{ActionItemId:guid}"
+@page "/action-items/create"
+@using ProjectManagementSystem.Features.ActionItems
+@using ProjectManagementSystem.Features.ActionItems.Models
+@using ProjectManagementSystem.Features.Tasks.Models
+@using ProjectManagementSystem.Features.Tasks
+@using ProjectManagementSystem.Features.Resources
+@using ProjectManagementSystem.Features.Issues
+@using ProjectManagementSystem.Data
+@using ProjectManagementSystem.Features.Shared
+@inject ActionItemService ActionItemService
+@inject ResourceService ResourceService
+@inject IssueService IssueService
+@inject TaskService TaskService
+@inject NavigationManager navigation
+@inject ApplicationDbContext db
+
+
+@code {
+    [Parameter]
+    public Guid ActionItemId { get; set; }
+
+    ActionItemModel action_itemModel = new ActionItemModel();
+    //ActionItem action_item = new ActionItem();
+    TaskModel taskModel = new TaskModel();
+    List<ActionItem> ActionItem = new List<ActionItem>();
+    List<ActionItem> ActionItemsTempList = new List<ActionItem>();
+    List<Resource> resource = new List<Resource>();
+    List<Issue> issues = new List<Issue>();
+    List<Issue> issueTempList = new List<Issue>();
+
+    Guid action_itemId;
+    Guid issueId;
+    Guid resourceId;
+    bool success;
+
+    protected override async System.Threading.Tasks.Task OnInitializedAsync()
+    {
+
+        if (ActionItemId != Guid.Empty)
+        {
+            action_itemModel = await ActionItemService.GetActionItemById(ActionItemId);
+
+        }
+
+
+        ActionItem = await ActionItemService.GetActionItemDataAsync();
+        resource = await ResourceService.GetResourcesAsync();
+        issues = await IssueService.GetIssuesDataAsync();
+
+      
+    }
+
+    private void ValidateNameExists(ValidatorEventArgs n)
+    {
+        var name = Convert.ToString(n.Value);
+
+        n.Status = string.IsNullOrEmpty(name) ? ValidationStatus.None : ValidationStatus.Success;
+    }
+
+
+
+    private void Save()
+    {
+        int entriesSaved = 0;
+        // If the name is empty, we cannot save because it is required
+        if (string.IsNullOrEmpty(action_itemModel.ActionItem.Name))
+        {
+            return;
+        }
+        else if (ActionItemId != Guid.Empty)
+        {
+            // Save edited changes
+            entriesSaved = db.SaveChanges();
+        }
+        else
+        {
+            // Save new changes
+            entriesSaved = ActionItemService.SaveActionItem(action_itemModel.ActionItem);
+        }
+
+        if (entriesSaved > 0)
+        {
+            success = true;
+        }
+    }
+
+
+
+    private void ClickBack()
+    {
+        navigation.NavigateTo("/action-items");
+    }
+
+    private void OnClearResourceClick()
+    {
+        action_itemModel.ActionItem.ResourceId = null;
+    }
+
+    private void OnClearIssueClick()
+    {
+        action_itemModel.ActionItem.IssueId = null;
+    }
+}
+
+<div class="container-fluid">
+    @if (ActionItemId != Guid.Empty)
+    {
+        <h1>Edit Action Item</h1>
+    }
+    else
+    {
+        <h1>Create Action Item</h1>
+    }
+
+<div class="list-table">
+    <Field Horizontal="true">
+        <FieldLabel ColumnSize="ColumnSize.Is2">Name</FieldLabel>
+        <FieldBody ColumnSize="ColumnSize.Is10">
+            <Validation Validator="@ValidateNameExists">
+                <TextEdit @bind-Text="@action_itemModel.ActionItem.Name">
+                    <Feedback>
+                        <ValidationNone>Name is required</ValidationNone>
+                    </Feedback>
+                </TextEdit>
+            </Validation>
+        </FieldBody>
+    </Field>
+    <Field Horizontal="true">
+        <FieldLabel ColumnSize="ColumnSize.Is2">Description</FieldLabel>
+        <FieldBody ColumnSize="ColumnSize.Is10">
+            <TextEdit @bind-Text="@action_itemModel.ActionItem.Description" />
+        </FieldBody>
+    </Field>
+
+    <Field Horizontal="true">
+        <FieldLabel ColumnSize="ColumnSize.Is2">Date Created</FieldLabel>
+        <FieldBody ColumnSize="ColumnSize.IsAuto">
+            <DateEdit TValue="DateTime?" @bind-Date="@action_itemModel.ActionItem.DateCreated" />
+        </FieldBody>
+    </Field>
+
+    <Field Horizontal="true">
+        <FieldLabel ColumnSize="ColumnSize.Is2">Date Assigned</FieldLabel>
+        <FieldBody ColumnSize="ColumnSize.IsAuto">
+            <DateEdit TValue="DateTime?" @bind-Date="@action_itemModel.ActionItem.DateAssigned" />
+        </FieldBody>
+    </Field>
+
+    <Field Horizontal="true">
+        <FieldLabel ColumnSize="ColumnSize.Is2"> Status </FieldLabel>
+        <FieldBody ColumnSize="ColumnSize.IsAuto">
+            <Select TValue="ActionItems.Status" @bind-SelectedValue="@action_itemModel.ActionItem.status">
+                <SelectItem Value="@action_itemModel.ActionItem.status">@action_itemModel.ActionItem.status</SelectItem>
+                @if (ActionItems.Status.Open != action_itemModel.ActionItem.status)
+                {
+                    <SelectItem Value="ActionItems.Status.Open">@ActionItems.Status.Open</SelectItem>
+                }
+                @if (ActionItems.Status.Closed != action_itemModel.ActionItem.status)
+                {
+                    <SelectItem Value="ActionItems.Status.Closed">@ActionItems.Status.Closed</SelectItem>
+                }
+                @if (ActionItems.Status.InProgress != action_itemModel.ActionItem.status)
+                {
+                    <SelectItem Value="ActionItems.Status.InProgress">@ActionItems.Status.InProgress</SelectItem>
+                }
+                @if (ActionItems.Status.Hold != action_itemModel.ActionItem.status)
+                {
+                    <SelectItem Value="ActionItems.Status.Hold">@ActionItems.Status.Hold</SelectItem>
+                }
+                @if (ActionItems.Status.Complete != action_itemModel.ActionItem.status)
+                {
+                    <SelectItem Value="ActionItems.Status.Complete">@ActionItems.Status.Complete</SelectItem>
+                }
+            </Select>
+        </FieldBody>
+    </Field>
+
+    <Field Horizontal="true">
+        <FieldLabel ColumnSize="ColumnSize.Is2">Status Description</FieldLabel>
+        <FieldBody ColumnSize="ColumnSize.Is10">
+            <TextEdit @bind-Text="@action_itemModel.ActionItem.statusDescription" />
+        </FieldBody>
+    </Field>
+
+    <Field Horizontal="true">
+        <FieldLabel ColumnSize="ColumnSize.Is2">Resource Assigned</FieldLabel>
+        <FieldBody ColumnSize="ColumnSize.Is2">
+            <Select TValue="Guid?" @bind-SelectedValue="@action_itemModel.ActionItem.ResourceId">
+                @if (action_itemModel.ActionItem.ResourceId == null)
+                {
+                    <SelectItem Value="@action_itemModel.ActionItem.ResourceId">Select...</SelectItem>
+                }
+                @foreach (var resource in resource)
+                {
+                    <SelectItem Value="resource.Id">@resource.Name</SelectItem>
+                }
+            </Select>
+        </FieldBody>
+        <Button Color="Color.Danger" Clicked="OnClearResourceClick">Remove</Button>
+    </Field>
+
+
+    <Field Horizontal="true">
+        <FieldLabel ColumnSize="ColumnSize.Is2">Issue</FieldLabel>
+        <FieldBody ColumnSize="ColumnSize.Is2">
+            <Select TValue="Guid?" @bind-SelectedValue="@action_itemModel.ActionItem.IssueId">
+                @if (action_itemModel.ActionItem.IssueId == null)
+                {
+                    <SelectItem Value="@action_itemModel.ActionItem.IssueId">Select...</SelectItem>
+                }
+                @foreach (var issue in issues)
+                {
+                    <SelectItem Value="issue.Id">@issue.Name</SelectItem>
+                }
+            </Select>
+        </FieldBody>
+        <Button Color="Color.Danger" Clicked="OnClearIssueClick">Remove</Button>
+    </Field>
+
+
+
+    <Field Horizontal="true">
+        <FieldLabel ColumnSize="ColumnSize.Is2">Expected Completion Date</FieldLabel>
+        <FieldBody ColumnSize="ColumnSize.IsAuto">
+            <DateEdit TValue="DateTime?" @bind-Date="@action_itemModel.ActionItem.ExpectedCompletionDate" />
+        </FieldBody>
+    </Field>
+
+
+    <Field Horizontal="true">
+        <FieldLabel ColumnSize="ColumnSize.Is2">Actual Completion Date</FieldLabel>
+        <FieldBody ColumnSize="ColumnSize.IsAuto">
+            <DateEdit TValue="DateTime?" @bind-Date="@action_itemModel.ActionItem.ActualCompletionDate" />
+        </FieldBody>
+    </Field>
+
+    <Field Horizontal="true">
+        <FieldLabel ColumnSize="ColumnSize.Is2">Update Date</FieldLabel>
+        <FieldBody ColumnSize="ColumnSize.IsAuto">
+            <DateEdit TValue="DateTime?" @bind-Date="@action_itemModel.ActionItem.UpdateDate" />
+        </FieldBody>
+    </Field>
+
+
+
+</div>
+    <div style="padding-top:1em; padding-bottom:2em;">
+        <Button class="back-button" Color="Color.Dark" @onclick="ClickBack">Back</Button>
+        @if (!success)
+        {
+            <Button class="save-button" Color="Color.Dark" @onclick="Save">Save</Button>
+        }
+        else
+        {
+            <Button class="save-button" Color="Color.Dark" @onclick="Save">Save Successful</Button>
+        }
+    </div>
+</div>

@@ -5,6 +5,8 @@ using ProjectManagementSystem.Features.Shared;
 using ProjectManagementSystem.Features.Skills;
 using ProjectManagementSystem.Features.Tasks;
 using ProjectManagementSystem.Features.Requirements;
+using ProjectManagementSystem.Features.ActionItems;
+
 using System;
 using System.Linq;
 
@@ -20,6 +22,7 @@ namespace ProjectManagementSystem.Data
             SeedDeliverables(db);
             SeedSkills(db);
             SeedRequirements(db);
+            SeedActionItems(db);
         }
 
         private static void SeedResources(ApplicationDbContext db)
@@ -115,6 +118,26 @@ namespace ProjectManagementSystem.Data
                 db.SaveChanges();
             }
         }
+   
+        private static void SeedActionItems(ApplicationDbContext db)
+        {
+            var action_item = db.ActionItem.Select(x => x.Id).ToList();
+
+            if (action_item.Count == 0)
+            {
+                var action_itemToAdd = new[]
+               {
+                    new ActionItem(){Name = "Action Item 1"},
+                    new ActionItem(){Name = "Action Item 2"},
+                    new ActionItem(){Name = "Action Item 3"},
+                    new ActionItem(){Name = "Action Item 4"}
+
+                };
+                db.Set<ActionItem>().AddRange(action_itemToAdd);
+                db.SaveChanges();
+            }
+
+        }
 
         private static void SeedDeliverables(ApplicationDbContext db)
         {
@@ -153,4 +176,5 @@ namespace ProjectManagementSystem.Data
             }
         }
     }
+
 }
