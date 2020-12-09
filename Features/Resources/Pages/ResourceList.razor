@@ -2,12 +2,14 @@
 @using Blazorise.DataGrid
 @using ProjectManagementSystem.Features.Resources
 @using ProjectManagementSystem.Data
-@using ProjectManagementSystem.Features.Resources.Models 
+@using ProjectManagementSystem.Features.Resources.Models
 @inject ResourceService ResourceService
 @inject ApplicationDbContext db
 @inject NavigationManager nav
 
 @code {
+    private Modal modalRef;
+    Guid? resourceIdToBeDeleted;
     List<ResourceListModel> resourceListData = new List<ResourceListModel>();
 
     protected override async System.Threading.Tasks.Task OnInitializedAsync()
@@ -25,33 +27,61 @@
         nav.NavigateTo("/resources/" + resourceId);
     }
 
-    private async void OnDeleteClick(Guid resourceId)
+    private void OnDeleteClick(Guid resourceId)
     {
-        var resourceDelete = await ResourceService.GetResourceById(resourceId);
+        modalRef.Show();
+        resourceIdToBeDeleted = resourceId;
+    }
+
+    private async void ConfirmDelete()
+    {
+        var resourceDelete = await ResourceService.GetResourceById((Guid)resourceIdToBeDeleted);
         db.Remove(resourceDelete);
         var result = await db.SaveChangesAsync();
         if (result > 0)
         {
             // Need to get our new data and refresh the component since we just deleted something from the Grid
-            resourceListData = resourceListData.FindAll(x => x.ResourceId != resourceId).ToList();
+            resourceListData = resourceListData.FindAll(x => x.ResourceId != resourceIdToBeDeleted).ToList();
             StateHasChanged();
         }
+        modalRef.Hide();
+    }
+
+    private void CancelDelete()
+    {
+        resourceIdToBeDeleted = null;
+        modalRef.Hide();
     }
 }
+<div class="container-fluid">
+    @if (this.resourceListData == null)
+    {
+        <h1>Loading...</h1>
+    }
+    else if (this.resourceListData.Count == 0)
+    {
+        <h1>There are no tasks</h1>
+    }
+    else
+    {
 
-@if (this.resourceListData == null)
-{
-    <h1>Loading...</h1>
-}
-else if (this.resourceListData.Count == 0)
-{
-    <h1>There are no tasks</h1>
-}
-else
-{
-    <div class="container-fluid">
         <h1>Resources List</h1>
-        <div class="list-table">
+        <div class="list-table" data-backdrop="false">
+            <Modal @ref="modalRef">
+                <ModalContent IsCentered="true">
+                    <ModalHeader>
+                        <ModalTitle>Delete Resource</ModalTitle>
+                        <CloseButton Clicked="@CancelDelete" />
+                    </ModalHeader>
+                    <ModalBody>
+                        <text>Are you sure you want to delete?</text>
+                    </ModalBody>
+                    <ModalFooter>
+                        <Button Color="Color.Secondary" Clicked="@CancelDelete">Cancel</Button>
+                        <Button Color="Color.Danger" Clicked="@ConfirmDelete">Delete</Button>
+                    </ModalFooter>
+                </ModalContent>
+            </Modal>
             <DataGrid TItem="ResourceListModel" Data="@resourceListData" Sortable="true" Filterable="true" ShowPager="true" PageSize="20" Striped="true" Borderless="true" Bordered="true" Editable="true">
                 <DataGridColumn TItem="ResourceListModel" Field="@nameof(ResourceListModel.ResourceName)" Caption="Name"></DataGridColumn>
                 <DataGridColumn TItem="ResourceListModel" Field="@nameof(ResourceListModel.ResourceTitle)" Caption="Title"></DataGridColumn>
@@ -63,9 +93,8 @@ else
                 </DataGridCommandColumn>
             </DataGrid>
         </div>
-        <div style="padding-top:1em;">
-            <Button Clicked="@OnCreateResourceClick" Color="Color.Info">Create Resource</Button>
-        </div>
+    }
+    <div style="padding-top:1em;">
+        <Button Clicked="@OnCreateResourceClick" Color="Color.Info">Create Resource</Button>
     </div>
-}
-
+</div>

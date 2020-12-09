@@ -1,6 +1,6 @@
 @page "/issues"
 @using Blazorise.DataGrid
-@using ProjectManagementSystem.Features.Issues 
+@using ProjectManagementSystem.Features.Issues
 @using ProjectManagementSystem.Features.Issues.Models
 @using ProjectManagementSystem.Data
 @inject IssueService IssueService
@@ -8,12 +8,15 @@
 @inject ApplicationDbContext db
 
 @code {
+    private Modal modalRef;
+    Guid? issueIdToBeDeleted;
     List<IssueListModel> issueListData = new List<IssueListModel>();
     List<IssueListModel> taskListData = new List<IssueListModel>();
     string expectedCompletionDate;
 
-    protected override async System.Threading.Tasks.Task OnInitializedAsync() {
-        issueListData = await IssueService.GetIssuesListData();        
+    protected override async System.Threading.Tasks.Task OnInitializedAsync()
+    {
+        issueListData = await IssueService.GetIssuesListData();
     }
 
     private void OnCreateIssueClick()
@@ -21,37 +24,66 @@
         nav.NavigateTo("/issues/create");
     }
 
-    private void OnEditClick(Guid issueId) {
+    private void OnEditClick(Guid issueId)
+    {
         nav.NavigateTo("/issues/" + issueId);
     }
 
-    private async void OnDeleteClick(Guid issueId)
+    private void OnDeleteClick(Guid issueId)
     {
-        var issueDelete = await IssueService.GetIssueById(issueId);
+        modalRef.Show();
+        issueIdToBeDeleted = issueId;
+    }
+
+    private async void ConfirmDelete()
+    {
+        var issueDelete = await IssueService.GetIssueById((Guid)issueIdToBeDeleted);
         db.Remove(issueDelete);
         var result = await db.SaveChangesAsync();
         if (result > 0)
         {
             //Need to get new data while refreshing component after removing item from Grid
-            issueListData = issueListData.FindAll(x => x.IssueId != issueId).ToList();
+            issueListData = issueListData.FindAll(x => x.IssueId != issueIdToBeDeleted).ToList();
             StateHasChanged(); //updates Blazorise page
         }
+        modalRef.Hide();
+    }
+
+    private void CancelDelete()
+    {
+        issueIdToBeDeleted = null;
+        modalRef.Hide();
     }
 }
+<div class="container-fluid">
+    @if (this.issueListData == null)
+    {
+        <h1>Loading...</h1>
+    }
+    else if (this.issueListData.Count == 0)
+    {
+        <h1>There are no issues</h1>
+    }
+    else
+    {
 
-@if (this.issueListData == null)
-{
-    <h1>Loading...</h1>
-}
-else if (this.issueListData.Count == 0)
-{
-    <h1>There are no issues</h1>
-}
-else
-{
-    <div class="container-fluid">
         <h1>Issues List</h1>
-        <div class="list-table">
+        <div class="list-table" data-backdrop="false">
+            <Modal @ref="modalRef">
+                <ModalContent IsCentered="true">
+                    <ModalHeader>
+                        <ModalTitle>Delete Issue</ModalTitle>
+                        <CloseButton Clicked="@CancelDelete" />
+                    </ModalHeader>
+                    <ModalBody>
+                        <text>Are you sure you want to delete?</text>
+                    </ModalBody>
+                    <ModalFooter>
+                        <Button Color="Color.Secondary" Clicked="@CancelDelete">Cancel</Button>
+                        <Button Color="Color.Danger" Clicked="@ConfirmDelete">Delete</Button>
+                    </ModalFooter>
+                </ModalContent>
+            </Modal>
             <DataGrid TItem="IssueListModel" Data="@issueListData" Sortable="true" Filterable="true" ShowPager="true" PageSize="20" Striped="true" Borderless="true" Bordered="true" Editable="true">
                 <DataGridColumn TItem="IssueListModel" Field="@nameof(IssueListModel.Name)" Caption="Name"></DataGridColumn>
                 <DataGridColumn TItem="IssueListModel" Field="@nameof(IssueListModel.Priority)" Caption="Priority"></DataGridColumn>
@@ -67,8 +99,10 @@ else
                 </DataGridCommandColumn>
             </DataGrid>
         </div>
-        <div style="padding-top:1em;">
-            <Button Clicked="@OnCreateIssueClick" Color="Color.Info">Create Issue</Button>
-        </div>
+
+
+    }
+    <div style="padding-top:1em;">
+        <Button Clicked="@OnCreateIssueClick" Color="Color.Info">Create Issue</Button>
     </div>
-}
+</div>

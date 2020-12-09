@@ -9,6 +9,8 @@
 
 
 @code {
+    private Modal modalRef;
+    Guid? actionItemIdToBeDeleted;
     List<ActionItemListModel> action_itemListModelData = new List<ActionItemListModel>();
 
 
@@ -27,17 +29,30 @@
         nav.NavigateTo("/action-items/" + action_itemId);
     }
 
-    private async void OnDeleteClick(Guid action_itemId)
+    private void OnDeleteClick(Guid action_itemId)
     {
-        var action_itemDelete = await ActionItemService.GetActionItemById(action_itemId);
+        modalRef.Show();
+        actionItemIdToBeDeleted = action_itemId;
+    }
+
+    private async void ConfirmDelete()
+    {
+        var action_itemDelete = await ActionItemService.GetActionItemById((Guid)actionItemIdToBeDeleted);
         db.Remove(action_itemDelete.ActionItem);
         var result = await db.SaveChangesAsync();
         if (result > 0)
         {
             // Need to get our new data and refresh the component since we just deleted something from the Grid
-            action_itemListModelData = action_itemListModelData.FindAll(x => x.ActionItemId != action_itemId).ToList();
+            action_itemListModelData = action_itemListModelData.FindAll(x => x.ActionItemId != actionItemIdToBeDeleted).ToList();
             StateHasChanged();
         }
+        modalRef.Hide();
+    }
+
+    private void CancelDelete()
+    {
+        actionItemIdToBeDeleted = null;
+        modalRef.Hide();
     }
 
 
@@ -49,20 +64,35 @@
 
 }
 
+<div class="container-fluid">
+    @if (this.action_itemListModelData == null)
+    {
+        <h1>Loading...</h1>
+    }
+    else if (this.action_itemListModelData.Count == 0)
+    {
+        <h1>There are no Action Items</h1>
+    }
+    else
+    {
 
-@if (this.action_itemListModelData == null)
-{
-    <h1>Loading...</h1>
-}
-else if (this.action_itemListModelData.Count == 0)
-{
-    <h1>There are no Action Items</h1>
-}
-else
-{
-    <div class="container-fluid">
         <h1>Action Items List</h1>
-        <div class="list-table">
+        <div class="list-table" data-backdrop="false">
+            <Modal @ref="modalRef">
+                <ModalContent IsCentered="true">
+                    <ModalHeader>
+                        <ModalTitle>Delete Action Item</ModalTitle>
+                        <CloseButton Clicked="@CancelDelete" />
+                    </ModalHeader>
+                    <ModalBody>
+                        <text>Are you sure you want to delete?</text>
+                    </ModalBody>
+                    <ModalFooter>
+                        <Button Color="Color.Secondary" Clicked="@CancelDelete">Cancel</Button>
+                        <Button Color="Color.Danger" Clicked="@ConfirmDelete">Delete</Button>
+                    </ModalFooter>
+                </ModalContent>
+            </Modal>
             <DataGrid TItem="ActionItemListModel" Data="@action_itemListModelData" Sortable="true" Filterable="true" ShowPager="true" PageSize="20" Striped="true" Borderless="true" Bordered="true" Editable="true">
                 <DataGridColumn TItem="ActionItemListModel" Field="@nameof(ActionItemListModel.ActionItemName)" Caption="Name"></DataGridColumn>
                 <DataGridColumn TItem="ActionItemListModel" Field="@nameof(ActionItemListModel.Status)" Caption="Status"></DataGridColumn>
@@ -79,12 +109,13 @@ else
                 </DataGridCommandColumn>
             </DataGrid>
         </div>
-        
+        <div style="padding-top:1em;">
+            <Button Clicked="@OnTabularViewClick" Color="Color.Dark" class="tabular-button">Tabular View</Button>
+        </div>
+
+    }
+
+    <div style="padding-top:1em;">
+        <Button Clicked="@OnCreateNewActionItemClick" Color="Color.Info">Create Action Item</Button>
     </div>
-}
-
-
-<div style="padding-top:1em;">
-    <Button Clicked="@OnCreateNewActionItemClick" Color="Color.Info">Create Action Item</Button>
-    <Button Clicked="@OnTabularViewClick" Color="Color.Dark" class="tabular-button">Tabular View</Button>
 </div>

@@ -12,8 +12,9 @@
 
 
 @code {
+    private Modal modalRef;
+    Guid? deliverableIdToBeDeleted;
     List<DeliverableListModel> deliverableListModelData = new List<DeliverableListModel>();
-
 
     protected override async System.Threading.Tasks.Task OnInitializedAsync()
     {
@@ -25,12 +26,18 @@
         nav.NavigateTo("/deliverables/" + deliverableId);
     }
 
-    private async void OnDeleteClick(Guid deliverableId)
+    private void OnDeleteClick(Guid deliverableId)
     {
-        var deliverableDelete = await DeliverableService.GetDeliverableById(deliverableId); //returns deliverable model
+        modalRef.Show();
+        deliverableIdToBeDeleted = deliverableId;
+    }
+
+    private async void ConfirmDelete()
+    {
+        var deliverableDelete = await DeliverableService.GetDeliverableById((Guid)deliverableIdToBeDeleted); //returns deliverable model
         DeliverableModel delivModel = new DeliverableModel();
-        delivModel.AssociatedTasks = await TaskService.GetTaskByDeliverableId(deliverableId);
-        delivModel.AssociatedRequirements = RequirementService.GetRequirementByDeliverableId(deliverableId);
+        delivModel.AssociatedTasks = await TaskService.GetTaskByDeliverableId((Guid)deliverableIdToBeDeleted);
+        delivModel.AssociatedRequirements = RequirementService.GetRequirementByDeliverableId((Guid)deliverableIdToBeDeleted);
         foreach (var task in delivModel.AssociatedTasks)
         {
             task.DeliverableId = null;
@@ -44,9 +51,16 @@
         if (result > 0)
         {
             // Need to get our new data and refresh the component since we just deleted something from the Grid
-            deliverableListModelData = deliverableListModelData.FindAll(x => x.Id != deliverableId).ToList();
+            deliverableListModelData = deliverableListModelData.FindAll(x => x.Id != deliverableIdToBeDeleted).ToList();
             StateHasChanged();  //updates blazorise page
         }
+        modalRef.Hide();
+    }
+
+    private void CancelDelete()
+    {
+        deliverableIdToBeDeleted = null;
+        modalRef.Hide();
     }
 
     private void OnCreateDeliverableClick()
@@ -56,29 +70,45 @@
 
 }
 
-
-@if (this.deliverableListModelData == null)
-{
-    <h1>Loading...</h1>
-}
-else if (this.deliverableListModelData.Count == 0)
-{
-    <h1>There are no deliverables</h1>
-}
-
 <div class="container-fluid">
-    <h1>Deliverables List</h1>
-    <div class="list-table">
-        <DataGrid TItem="DeliverableListModel" Data="@deliverableListModelData" Sortable="true" Filterable="true" ShowPager="true" PageSize="20" Striped="true" Borderless="true" Bordered="true" Editable="true">
-            <DataGridColumn TItem="DeliverableListModel" Field="@nameof(DeliverableListModel.Name)" Caption="Name"></DataGridColumn>
-            <DataGridColumn TItem="DeliverableListModel" Field="@nameof(DeliverableListModel.DueDate)" Caption="Due Date"></DataGridColumn>
-            <DataGridCommandColumn TItem="DeliverableListModel">
-                <NewCommandTemplate Context="deliverable"></NewCommandTemplate>
-                <EditCommandTemplate Context="deliverable"><Button Color="Color.Primary" Clicked="@(e=> OnEditClick(deliverable.Item.Id))">Edit</Button></EditCommandTemplate>
-                <DeleteCommandTemplate Context="deliverable"><Button Color="Color.Danger" Clicked="@(e=> OnDeleteClick(deliverable.Item.Id))">Delete</Button></DeleteCommandTemplate>
-            </DataGridCommandColumn>
-        </DataGrid>
-    </div>
+    @if (this.deliverableListModelData == null)
+    {
+        <h1>Loading...</h1>
+    }
+    else if (this.deliverableListModelData.Count == 0)
+    {
+        <h1>There are no deliverables</h1>
+    }
+    else
+    {
+        <h1>Deliverables List</h1>
+        <div class="list-table" data-backdrop="false">
+            <Modal @ref="modalRef">
+                <ModalContent IsCentered="true">
+                    <ModalHeader>
+                        <ModalTitle>Delete Action Item</ModalTitle>
+                        <CloseButton Clicked="@CancelDelete" />
+                    </ModalHeader>
+                    <ModalBody>
+                        <text>Are you sure you want to delete?</text>
+                    </ModalBody>
+                    <ModalFooter>
+                        <Button Color="Color.Secondary" Clicked="@CancelDelete">Cancel</Button>
+                        <Button Color="Color.Danger" Clicked="@ConfirmDelete">Delete</Button>
+                    </ModalFooter>
+                </ModalContent>
+            </Modal>
+            <DataGrid TItem="DeliverableListModel" Data="@deliverableListModelData" Sortable="true" Filterable="true" ShowPager="true" PageSize="20" Striped="true" Borderless="true" Bordered="true" Editable="true">
+                <DataGridColumn TItem="DeliverableListModel" Field="@nameof(DeliverableListModel.Name)" Caption="Name"></DataGridColumn>
+                <DataGridColumn TItem="DeliverableListModel" Field="@nameof(DeliverableListModel.DueDate)" Caption="Due Date"></DataGridColumn>
+                <DataGridCommandColumn TItem="DeliverableListModel">
+                    <NewCommandTemplate Context="deliverable"></NewCommandTemplate>
+                    <EditCommandTemplate Context="deliverable"><Button Color="Color.Primary" Clicked="@(e=> OnEditClick(deliverable.Item.Id))">Edit</Button></EditCommandTemplate>
+                    <DeleteCommandTemplate Context="deliverable"><Button Color="Color.Danger" Clicked="@(e=> OnDeleteClick(deliverable.Item.Id))">Delete</Button></DeleteCommandTemplate>
+                </DataGridCommandColumn>
+            </DataGrid>
+        </div>
+    }
     <div style="padding-top:1em;">
         <Button Clicked="@OnCreateDeliverableClick" Color="Color.Info">Create Deliverable</Button>
     </div>
