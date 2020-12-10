@@ -108,7 +108,7 @@
     {
         int entriesSaved = 0;
         // If the name is empty, we cannot save because it is required
-        if (string.IsNullOrEmpty(taskModel.Task.Name))
+        if (string.IsNullOrEmpty(taskModel.Task.Name) || success)
         {
             return;
         }
@@ -132,6 +132,9 @@
             StateHasChanged();
         }
 
+
+
+    }
 
 
     }
