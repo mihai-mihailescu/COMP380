@@ -48,15 +48,14 @@ namespace ProjectManagementSystem.Features.Deliverables
             return deliverableModel;
         }
 
-        //public async Task<List<Task>> GetDeliverablesDataAsync()
-        //{
-        //    //No sure what this is for
-        //    var deliverableModel = await (
-        //        from deliverable in this.db.Deliverable
-        //        select deliverable).ToListAsync();
+        public async Task<List<Deliverable>> GetDeliverablesDataAsync()
+        {
+            var deliverables = await (
+                from deliverable in this.db.Deliverable
+                select deliverable).ToListAsync();
 
-        //    return deliverableModel;
-        //}
+            return deliverables;
+        }
 
         public int SaveDeliverable(DeliverableModel deliverableData)
         {

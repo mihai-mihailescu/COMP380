@@ -20,6 +20,7 @@
     DeliverableModel deliverableModel = new DeliverableModel(); //Use for new delivs.
     List<Tasks.Task> tempTasks = new List<Tasks.Task>();    //Unassociated Tasks
     List<Requirements.Requirement> tempRequirements = new List<Requirements.Requirement>(); //Unassociated
+    List<Deliverable> deliverableList = new List<Deliverable>();//used for name validation
 
     Guid requirementId;
     Guid taskId;
@@ -38,6 +39,7 @@
 
         tempTasks = await TaskService.GetUnassociatedTasksAsync();
         tempRequirements = RequirementService.GetUnassociatedRequirementsDataAsync();
+        deliverableList = await DeliverableService.GetDeliverablesDataAsync();
     }
 
     private void Save()
@@ -119,6 +121,10 @@
         var name = Convert.ToString(n.Value);
 
         n.Status = string.IsNullOrEmpty(name) ? ValidationStatus.None : ValidationStatus.Success;
+
+        foreach (var deliverable in deliverableList)
+            if (deliverable.Name == name)
+                n.Status = ValidationStatus.Error;
     }
 
     private void ClickBack()
@@ -150,6 +156,7 @@
                 <TextEdit @bind-Text="@deliverableModel.Deliverable.Name">
                     <Feedback>
                         <ValidationNone>Name is required</ValidationNone>
+                        <ValidationError>Name is already being used</ValidationError>
                     </Feedback>
                 </TextEdit>
             </Validation>
