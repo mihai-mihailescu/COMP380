@@ -46,6 +46,7 @@
     {
         int entriesSaved = 0;
         // If the name is empty, we cannot save because it is required
+
         if (string.IsNullOrEmpty(deliverableModel.Deliverable.Name))
         {
             return;
@@ -54,16 +55,20 @@
         {
             // Save edited changes
             entriesSaved = db.SaveChanges();
+            if (entriesSaved == 0)
+                success = false;   //if there's no changes, change button back to normal save; 
+            else
+                success = true;
         }
         else
         {
             // Save new changes
             entriesSaved = DeliverableService.SaveDeliverable(deliverableModel);
-        }
-
-        if (entriesSaved > 0)
-        {
+            Id = deliverableModel.Deliverable.Id;   //Once new deliverable is saved, dont come back;
+            StateHasChanged();
             success = true;
+
+            //navigation.NavigateTo("/deliverables/" + Id); //another option
         }
     }
 
@@ -122,9 +127,9 @@
 
         n.Status = string.IsNullOrEmpty(name) ? ValidationStatus.None : ValidationStatus.Success;
 
-        foreach (var deliverable in deliverableList)
-            if (deliverable.Name == name)
-                n.Status = ValidationStatus.Error;
+        //foreach (var deliverable in deliverableList)
+        //    if (deliverable.Name == name)
+        //        n.Status = ValidationStatus.Error;
     }
 
     private void ClickBack()
@@ -138,6 +143,8 @@
     }
 }
 
+
+   
 <div class="container-fluid">
     @if (Id != Guid.Empty)
     {
@@ -148,104 +155,106 @@
         <h1>Create Deliverable</h1>
     }
 
-<div class="list-table">
-    <Field Horizontal="true">
-        <FieldLabel ColumnSize="ColumnSize.Is2">Name</FieldLabel>
-        <FieldBody ColumnSize="ColumnSize.Is10">
-            <Validation Validator="@ValidateNameExists">
-                <TextEdit @bind-Text="@deliverableModel.Deliverable.Name">
-                    <Feedback>
-                        <ValidationNone>Name is required</ValidationNone>
-                        <ValidationError>Name is already being used</ValidationError>
-                    </Feedback>
-                </TextEdit>
-            </Validation>
-        </FieldBody>
-    </Field>
-    <Field Horizontal="true">
-        <FieldLabel ColumnSize="ColumnSize.Is2">Description</FieldLabel>
-        <FieldBody ColumnSize="ColumnSize.Is10">
-            <TextEdit @bind-Text="@deliverableModel.Deliverable.Description" />
-        </FieldBody>
-    </Field>
-    <Field Horizontal="true">
-        <FieldLabel ColumnSize="ColumnSize.Is2">Due Date</FieldLabel>
-        <FieldBody ColumnSize="ColumnSize.IsAuto">
-            <DateEdit TValue="DateTime?" Date="@deliverableModel.Deliverable.DueDate" DateChanged="@OnDueDateClick" />
-        </FieldBody>
-    </Field>
-    <Field Horizontal="true">
-        <FieldLabel ColumnSize="ColumnSize.Is2">Tasks</FieldLabel>
-        <FieldBody ColumnSize="ColumnSize.Is3">
-            <Select TValue="Guid" @bind-SelectedValue="@taskId">
-                @if (taskId == Guid.Empty)
-                {
-                    <SelectItem Value="@taskId">Select...</SelectItem>
-                }
-                @foreach (var task in tempTasks)
-                {
-                    <SelectItem Value="task.Id">@task.Name</SelectItem>
-                }
-            </Select>
-        </FieldBody>
-        <Button Color="Color.Primary" Clicked="OnAddTaskClick">Add</Button>
-    </Field>
-    <Field Horizontal="true">
-        <FieldLabel ColumnSize="ColumnSize.Is2">Task Associations</FieldLabel>
-        <FieldBody ColumnSize="ColumnSize.Is3">
-            <Select Multiple="true" TValue="Guid" @bind-SelectedValue="@taskId">
-                @foreach (var task in deliverableModel.AssociatedTasks)
-                {
-   
-                    <SelectItem Value="task.Id">@task.Name</SelectItem>
-                }
-            </Select>
-            <div style="padding-top:5px;">
-                <Button Color="Color.Danger" Clicked="OnRemoveTaskClick">Remove All</Button>
-            </div>
-        </FieldBody>
-    </Field>
-    <Field Horizontal="true">
-        <FieldLabel ColumnSize="ColumnSize.Is2">Requirements</FieldLabel>
-        <FieldBody ColumnSize="ColumnSize.Is3">
-            <Select TValue="Guid" @bind-SelectedValue="@requirementId">
-                @if (requirementId == Guid.Empty)
-                {
-                    <SelectItem Value="@requirementId">Select...</SelectItem>
-                }
-                @foreach (var requirement in tempRequirements)
-                {
-                    <SelectItem Value="requirement.Id">@requirement.Name</SelectItem>
-                }
-            </Select>
-        </FieldBody>
-        <Button Color="Color.Primary" Clicked="OnAddRequirementClick">Add</Button>
-    </Field>
-    <Field Horizontal="true">
-        <FieldLabel ColumnSize="ColumnSize.Is2">Requirement Associations</FieldLabel>
-        <FieldBody ColumnSize="ColumnSize.Is3">
-            <Select Multiple="true" TValue="Guid" @bind-SelectedValue="@taskId">
-                @foreach (var requirement in deliverableModel.AssociatedRequirements)
-                {
+    <div class="list-table">
+        <Field Horizontal="true">
+            <FieldLabel ColumnSize="ColumnSize.Is2">Name</FieldLabel>
+            <FieldBody ColumnSize="ColumnSize.Is10">
+                <Validation Validator="@ValidateNameExists">
+                    <TextEdit @bind-Text="@deliverableModel.Deliverable.Name">
+                        <Feedback>
+                            <ValidationNone>Name is required</ValidationNone>
+                            <ValidationError>Name is already being used</ValidationError>
+                        </Feedback>
+                    </TextEdit>
+                </Validation>
+            </FieldBody>
+        </Field>
+        <Field Horizontal="true">
+            <FieldLabel ColumnSize="ColumnSize.Is2">Description</FieldLabel>
+            <FieldBody ColumnSize="ColumnSize.Is10">
+                <TextEdit @bind-Text="@deliverableModel.Deliverable.Description" />
+            </FieldBody>
+        </Field>
+        <Field Horizontal="true">
+            <FieldLabel ColumnSize="ColumnSize.Is2">Due Date</FieldLabel>
+            <FieldBody ColumnSize="ColumnSize.IsAuto">
+                <DateEdit TValue="DateTime?" Date="@deliverableModel.Deliverable.DueDate" DateChanged="@OnDueDateClick" />
+            </FieldBody>
+        </Field>
+        <Field Horizontal="true">
+            <FieldLabel ColumnSize="ColumnSize.Is2">Tasks</FieldLabel>
+            <FieldBody ColumnSize="ColumnSize.Is3">
+                <Select TValue="Guid" @bind-SelectedValue="@taskId">
+                    @if (taskId == Guid.Empty)
+                    {
+                        <SelectItem Value="@taskId">Select...</SelectItem>
+                    }
+                    @foreach (var task in tempTasks)
+                    {
+                        <SelectItem Value="task.Id">@task.Name</SelectItem>
+                    }
+                </Select>
+            </FieldBody>
+            <Button Color="Color.Primary" Clicked="OnAddTaskClick">Add</Button>
+        </Field>
+        <Field Horizontal="true">
+            <FieldLabel ColumnSize="ColumnSize.Is2">Task Associations</FieldLabel>
+            <FieldBody ColumnSize="ColumnSize.Is3">
+                <Select Multiple="true" TValue="Guid" @bind-SelectedValue="@taskId">
+                    @foreach (var task in deliverableModel.AssociatedTasks)
+                    {
 
-                    <SelectItem Value="requirement.Id">@requirement.Name</SelectItem>
-                }
-            </Select>
-            <div style="padding-top:5px;">
-                <Button Color="Color.Danger" Clicked="OnRemoveRequirementClick">Remove All</Button>
-            </div>
-        </FieldBody>
-    </Field>
-</div>
+                        <SelectItem Value="task.Id">@task.Name</SelectItem>
+                    }
+                </Select>
+                <div style="padding-top:5px;">
+                    <Button Color="Color.Danger" Clicked="OnRemoveTaskClick">Remove All</Button>
+                </div>
+            </FieldBody>
+        </Field>
+        <Field Horizontal="true">
+            <FieldLabel ColumnSize="ColumnSize.Is2">Requirements</FieldLabel>
+            <FieldBody ColumnSize="ColumnSize.Is3">
+                <Select TValue="Guid" @bind-SelectedValue="@requirementId">
+                    @if (requirementId == Guid.Empty)
+                    {
+                        <SelectItem Value="@requirementId">Select...</SelectItem>
+                    }
+                    @foreach (var requirement in tempRequirements)
+                    {
+                        <SelectItem Value="requirement.Id">@requirement.Name</SelectItem>
+                    }
+                </Select>
+            </FieldBody>
+            <Button Color="Color.Primary" Clicked="OnAddRequirementClick">Add</Button>
+        </Field>
+        <Field Horizontal="true">
+            <FieldLabel ColumnSize="ColumnSize.Is2">Requirement Associations</FieldLabel>
+            <FieldBody ColumnSize="ColumnSize.Is3">
+                <Select Multiple="true" TValue="Guid" @bind-SelectedValue="@taskId">
+                    @foreach (var requirement in deliverableModel.AssociatedRequirements)
+                    {
+
+                        <SelectItem Value="requirement.Id">@requirement.Name</SelectItem>
+                    }
+                </Select>
+                <div style="padding-top:5px;">
+                    <Button Color="Color.Danger" Clicked="OnRemoveRequirementClick">Remove All</Button>
+                </div>
+            </FieldBody>
+        </Field>
+    </div>
     <div style="padding-top:1em; padding-bottom:2em;">
         <Button class="back-button" Color="Color.Dark" @onclick="ClickBack">Back</Button>
+
         @if (!success)
         {
-            <Button class="save-button" Color="Color.Dark" @onclick="Save">Save</Button>
+                <Button class="save-button" Color="Color.Dark" @onclick="Save">Save</Button>
         }
         else
         {
-            <Button class="save-button" Color="Color.Dark" @onclick="Save">Save Successful</Button>
+                <Button class="save-button" Color="Color.Dark" @onclick="Save">Save Successful!</Button>
         }
     </div>
 </div>
+

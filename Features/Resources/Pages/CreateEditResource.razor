@@ -142,17 +142,23 @@
 
             // Save edited changes
             entriesSaved = db.SaveChanges();
+
+            if (entriesSaved > 0)
+            {
+                success = true;
+                StateHasChanged();
+            }
         }
         else
         {
             // Save new changes
             entriesSaved = ResourceService.SaveResource(resource, resourceSkills);
+            ResourceId = resource.Id;
+            success = true;
+            StateHasChanged();
         }
 
-        if (entriesSaved > 0)
-        {
-            success = true;
-        }
+
     }
 
     private void ClickBack()

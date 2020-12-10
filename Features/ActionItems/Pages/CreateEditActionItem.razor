@@ -68,20 +68,23 @@
         {
             // Save edited changes
             entriesSaved = db.SaveChanges();
+            if (entriesSaved > 0)
+            {
+                success = true;
+                StateHasChanged();
+            }
+            else
+                success = false;
         }
         else
         {
             // Save new changes
             entriesSaved = ActionItemService.SaveActionItem(action_itemModel.ActionItem);
-        }
-
-        if (entriesSaved > 0)
-        {
+            ActionItemId = action_itemModel.ActionItem.Id;
             success = true;
+            StateHasChanged();
         }
     }
-
-
 
     private void ClickBack()
     {
@@ -102,7 +105,7 @@
 <div class="container-fluid">
     @if (ActionItemId != Guid.Empty)
     {
-        <h1>Edit Action Item</h1>
+        <h1>@action_itemModel.ActionItem.Name</h1>
     }
     else
     {

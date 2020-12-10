@@ -16,17 +16,16 @@
 @inject DecisionService DecisionService 
 
 @code{
-    [Parameter]
-    public Guid IssueId { get; set; }
+        [Parameter]
+        public Guid IssueId { get; set; }
 
-    IssueModel issueModel = new IssueModel();
-    List<ActionItem> unassociatedActionItems = new List<ActionItem>();
-    List<Decision> unassociatedDecisions = new List<Decision>();
-    List<Issue> issueList = new List<Issue>();    //used for name validation
+        IssueModel issueModel = new IssueModel();
+        List<ActionItem> unassociatedActionItems = new List<ActionItem>();
+        List<Decision> unassociatedDecisions = new List<Decision>();
 
-    Guid actionId;
-    Guid decisionId;
-    bool success;
+        Guid actionId;
+        Guid decisionId;
+        bool success;
 
     protected override async System.Threading.Tasks.Task OnInitializedAsync()
     {
@@ -40,7 +39,6 @@
 
         unassociatedActionItems = await ActionItemService.GetUnassociatedActionItems(issueModel.Issue);
         unassociatedDecisions = await DecisionService.GetUnassociatedDecisions(issueModel.Issue);
-        issueList = await IssueService.GetIssuesDataAsync();
     }
 
     private void ValidateNameExists(ValidatorEventArgs n)
@@ -48,13 +46,6 @@
         var name = Convert.ToString(n.Value);
 
         n.Status = string.IsNullOrEmpty(name) ? ValidationStatus.None : ValidationStatus.Success;
-        //Check that the string doesnt exist.
-
-        foreach (var issue in issueList)
-            if (issue.Name == name)
-                n.Status = ValidationStatus.Error;
-
-
     }
 
     private void Save()
@@ -70,16 +61,21 @@
         {
             // Save edited changes
             entriesSaved = db.SaveChanges();
+            if (entriesSaved > 0)
+            {
+                success = true;
+                StateHasChanged();
+            }
+            else
+                success = false;
         }
         else
         {
             // Save new changes
             entriesSaved = IssueService.SaveIssue(issueModel);
-        }
-
-        if (entriesSaved > 0)
-        {
+            IssueId = issueModel.Issue.Id; ;
             success = true;
+            StateHasChanged();
         }
     }
 
