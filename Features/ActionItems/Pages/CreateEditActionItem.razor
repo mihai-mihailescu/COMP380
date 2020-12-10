@@ -60,11 +60,12 @@
     {
         int entriesSaved = 0;
         // If the name is empty, we cannot save because it is required
-        if (string.IsNullOrEmpty(action_itemModel.ActionItem.Name))
+        if (string.IsNullOrEmpty(action_itemModel.ActionItem.Name) || success)
         {
+            success = false;
             return;
         }
-        else if (ActionItemId != Guid.Empty)
+        else if (ActionItemId != Guid.Empty )
         {
             // Save edited changes
             entriesSaved = db.SaveChanges();

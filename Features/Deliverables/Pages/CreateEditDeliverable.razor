@@ -47,8 +47,9 @@
         int entriesSaved = 0;
         // If the name is empty, we cannot save because it is required
 
-        if (string.IsNullOrEmpty(deliverableModel.Deliverable.Name))
+        if (string.IsNullOrEmpty(deliverableModel.Deliverable.Name) || success)
         {
+            success = false;
             return;
         }
         else if (Id != Guid.Empty)

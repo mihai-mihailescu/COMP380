@@ -124,7 +124,7 @@
     {
         int entriesSaved = 0;
         // If the name is empty, we cannot save because it is required
-        if (string.IsNullOrEmpty(resource.Name))
+        if (string.IsNullOrEmpty(resource.Name) || success)
         {
             return;
         }

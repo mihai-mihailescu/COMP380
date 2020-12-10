@@ -16,16 +16,16 @@
 @inject DecisionService DecisionService 
 
 @code{
-        [Parameter]
-        public Guid IssueId { get; set; }
+    [Parameter]
+    public Guid IssueId { get; set; }
 
-        IssueModel issueModel = new IssueModel();
-        List<ActionItem> unassociatedActionItems = new List<ActionItem>();
-        List<Decision> unassociatedDecisions = new List<Decision>();
+    IssueModel issueModel = new IssueModel();
+    List<ActionItem> unassociatedActionItems = new List<ActionItem>();
+    List<Decision> unassociatedDecisions = new List<Decision>();
 
-        Guid actionId;
-        Guid decisionId;
-        bool success;
+    Guid actionId;
+    Guid decisionId;
+    bool success;
 
     protected override async System.Threading.Tasks.Task OnInitializedAsync()
     {
@@ -53,8 +53,9 @@
         int entriesSaved = 0;
 
         // If the name is empty, we cannot save because it is required
-        if (string.IsNullOrEmpty(issueModel.Issue.Name))
+        if (string.IsNullOrEmpty(issueModel.Issue.Name) || success)
         {
+            success = false;
             return;
         }
         else if (IssueId != Guid.Empty)

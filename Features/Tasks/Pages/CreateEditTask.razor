@@ -110,6 +110,7 @@
         // If the name is empty, we cannot save because it is required
         if (string.IsNullOrEmpty(taskModel.Task.Name) || success)
         {
+            success = false;    //change button back
             return;
         }
         else if (TaskId != Guid.Empty)
@@ -131,12 +132,6 @@
             success = true;
             StateHasChanged();
         }
-
-
-
-    }
-
-
     }
 
     private void OnAddPredecessorTaskClick()
