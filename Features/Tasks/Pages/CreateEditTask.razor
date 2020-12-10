@@ -26,7 +26,7 @@
     List<Tasks.Task> taskGroupTempList = new List<Tasks.Task>();
 
     Guid predecessorTaskId;
-    Guid successorTaskId;    
+    Guid successorTaskId;
     Guid issueId;
 
     bool success;
@@ -106,7 +106,7 @@
     {
         int entriesSaved = 0;
         // If the name is empty, we cannot save because it is required
-        if (string.IsNullOrEmpty(taskModel.Task.Name))
+        if (string.IsNullOrEmpty(taskModel.Task.Name) || success)
         {
             return;
         }
@@ -119,12 +119,15 @@
         {
             // Save new changes
             entriesSaved = await TaskService.SaveTask(taskModel.Task);
+
+            if (entriesSaved > 0)
+            {
+                success = true;
+                StateHasChanged();
+            }
         }
 
-        if (entriesSaved > 0)
-        {
-            success = true;
-        }
+
     }
 
     private void OnAddPredecessorTaskClick()
@@ -563,7 +566,7 @@
         }
         else
         {
-            <Button class="save-button" Color="Color.Dark" @onclick="Save">Save Successful</Button>
+            <Button class="save-button" Color="Color.Dark">Save Successful</Button>
         }
     </div>
 </div>
